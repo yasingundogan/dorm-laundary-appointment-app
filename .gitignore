@@ -1,0 +1,11 @@
+# Kişisel öğrenme notları (repoya girmez)
+ogrenme/
+
+# Taslak ders belgeleri (takım docs/ klasörüne karar verene kadar)
+ders/
+
+# Veritabanı dosyası: schema.sql'den her zaman yeniden kurulabilir
+*.db
+
+# macOS'in kendi dosyası
+.DS_Store
