@@ -19,14 +19,19 @@
               padding: 10px; text-align: center; }
     .no { font-size: 22px; font-weight: 700; }
     .durum { font-size: 12px; margin-top: 4px; padding: 2px 6px; border-radius: 999px; display: inline-block; }
-    .durum.calisiyor { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .durum.bos { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .durum.dolu { background: #fdf0d5; color: #8a5a00; }
     .durum.arizali { background: var(--arizali-acik); color: var(--arizali); }
   </style>
 </head>
 <body>
 <main>
   <h1>Makineler</h1>
-  <p class="alt">Toplam {{ makineler | length }} makine</p>
+  <p class="alt">
+    {{ zaman }} itibarıyla ·
+    {{ makineler | selectattr("dolu", "equalto", 0) | selectattr("out_of_order", "equalto", 0) | list | length }}
+    / {{ makineler | length }} makine boş
+  </p>
 
   {# Aynı yapı iki kez kullanılıyor: önce çamaşır, sonra kurutma makineleri #}
   {% for tip, baslik in [("washer", "Çamaşır makineleri"), ("dryer", "Kurutma makineleri")] %}
@@ -37,8 +42,10 @@
           <div class="no">{{ m["machine_no"] }}</div>
           {% if m["out_of_order"] %}
             <span class="durum arizali">Arızalı</span>
+          {% elif m["dolu"] %}
+            <span class="durum dolu">Dolu</span>
           {% else %}
-            <span class="durum calisiyor">Çalışıyor</span>
+            <span class="durum bos">Boş</span>
           {% endif %}
         </div>
       {% endfor %}
