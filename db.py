@@ -16,6 +16,25 @@ def tum_makineler():
     conn.close()
     return makineler
 
+def makine_durumlari(zaman):
+    conn = baglanti_al()
+    makineler = conn.execute("""
+        select m.machine_no, m.machine_type, m.out_of_order,
+               exists (
+                   select 1
+                   from appointments a
+                   where a.machine_id = m.machine_id
+                     and a.status = 'active'
+                     and a.start_time <= ?                    -- başlangıç ≤ zaman
+                     and datetime(a.start_time, case when m.machine_type = 'dryer' then '+2 hours' else '+1 hour' end) > ?                    -- bitiş > zaman
+               ) as dolu
+        from machines m
+        order by m.machine_no
+    """, (zaman, zaman)).fetchall()
+    conn.close()
+    return makineler
+
 if __name__ == "__main__":
-    for m in tum_makineler():
-        print(m["machine_no"], m["machine_type"], m["out_of_order"])
+    durumlar = makine_durumlari("2026-10-07 14:30:00")
+    print("Toplam:", len(durumlar))
+    print("Dolu:", sum(m["dolu"] for m in durumlar))
