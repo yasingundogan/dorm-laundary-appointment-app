@@ -9,3 +9,7 @@ ders/
 
 # macOS'in kendi dosyası
 .DS_Store
+
+# Python sanal ortamı ve önbellek dosyaları
+.venv/
+__pycache__/

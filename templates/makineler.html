@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Makineler · Yurt Çamaşırhanesi</title>
+  <style>
+    :root { --bg: #f3f5f8; --kart: #ffffff; --yazi: #18202e; --soluk: #5b6578; --cizgi: #d9dee7;
+            --arizali: #b3261e; --arizali-acik: #fbe9e7; --calisiyor: #2e7d5b; --calisiyor-acik: #e2f1ea; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--yazi);
+           font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 26px; margin: 0 0 4px; }
+    .alt { color: var(--soluk); margin: 0 0 24px; }
+    h2 { font-size: 18px; margin: 28px 0 10px; }
+    .izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+    .makine { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 8px;
+              padding: 10px; text-align: center; }
+    .no { font-size: 22px; font-weight: 700; }
+    .durum { font-size: 12px; margin-top: 4px; padding: 2px 6px; border-radius: 999px; display: inline-block; }
+    .durum.calisiyor { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .durum.arizali { background: var(--arizali-acik); color: var(--arizali); }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Makineler</h1>
+  <p class="alt">Toplam {{ makineler | length }} makine</p>
+
+  {# Aynı yapı iki kez kullanılıyor: önce çamaşır, sonra kurutma makineleri #}
+  {% for tip, baslik in [("washer", "Çamaşır makineleri"), ("dryer", "Kurutma makineleri")] %}
+    <h2>{{ baslik }}</h2>
+    <div class="izgara">
+      {% for m in makineler if m["machine_type"] == tip %}
+        <div class="makine">
+          <div class="no">{{ m["machine_no"] }}</div>
+          {% if m["out_of_order"] %}
+            <span class="durum arizali">Arızalı</span>
+          {% else %}
+            <span class="durum calisiyor">Çalışıyor</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</main>
+</body>
+</html>
