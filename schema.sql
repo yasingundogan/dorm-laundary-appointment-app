@@ -32,6 +32,7 @@ create table students (
     student_phone_no text not null,
     student_mail     text not null,
     room_no          text not null,
+    student_password_hash text not null,
     unique (student_mail),
     unique (student_phone_no)
 );
