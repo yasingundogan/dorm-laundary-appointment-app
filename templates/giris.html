@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Giriş Yap · Yurt Çamaşırhanesi</title>
+  <style>
+    :root{--bg:#f4f6fb;--ink:#182238;--muted:#687386;--line:#e1e6ef;--brand:#3459e6;--brand2:#263fae;--white:#fff}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 8% 8%,#e3eaff 0,transparent 31%),var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+    .top-wrap{position:relative}.topbar{height:70px;padding:0 clamp(18px,5vw,64px);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e4e9f1;background:#ffffffd9}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:750;letter-spacing:-.3px}.logo{width:36px;height:36px;display:grid;place-items:center;border-radius:11px;background:var(--brand);color:white;font-size:20px}.right{display:flex;align-items:center;gap:13px;color:var(--muted);font-size:13px}.email{display:flex;align-items:center;gap:7px}.avatar{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:#e6ebff;color:var(--brand);font-weight:750}
+    .notice{position:relative;width:38px;height:36px;border:1px solid var(--line);background:white;color:var(--ink);border-radius:10px;font-size:17px;cursor:pointer}.dot{position:absolute;right:6px;top:5px;width:7px;height:7px;border-radius:50%;background:#e34d59;border:1px solid white}.notice-panel{display:none;position:absolute;right:clamp(12px,4vw,60px);top:60px;width:285px;padding:15px;background:white;border:1px solid var(--line);border-radius:13px;box-shadow:0 16px 42px #182b5520;z-index:5;font-size:13px}.notice-panel p{margin:7px 0 0;color:var(--muted);line-height:1.55}
+    main{min-height:calc(100vh - 70px);display:grid;place-items:center;padding:32px 18px}.layout{width:min(940px,100%);display:grid;grid-template-columns:1.03fr .97fr;overflow:hidden;background:white;border:1px solid var(--line);border-radius:24px;box-shadow:0 24px 70px #22336115}.intro{padding:46px;background:linear-gradient(145deg,#243eb8,#5a79f4);color:white;display:flex;flex-direction:column;justify-content:space-between;min-height:560px}.eyebrow{font-size:12px;font-weight:750;letter-spacing:1.7px;text-transform:uppercase;opacity:.82}.intro h1{font-size:clamp(32px,4vw,44px);line-height:1.12;letter-spacing:-1.3px;margin:20px 0 14px}.intro p{color:#e2e9ff;line-height:1.7;margin:0;max-width:340px}.feature{display:flex;align-items:center;gap:12px;margin-top:28px;font-size:14px;color:#f6f7ff}.feature-icon{width:36px;height:36px;border:1px solid #ffffff36;border-radius:10px;background:#ffffff20;display:grid;place-items:center}.intro-foot{font-size:12px;color:#d6deff}
+    .form-side{padding:46px clamp(26px,4.5vw,56px);display:flex;flex-direction:column;justify-content:center}.form-side h2{font-size:29px;letter-spacing:-.7px;margin:0 0 8px}.sub{font-size:14px;color:var(--muted);line-height:1.6;margin:0 0 27px}.field{margin-bottom:18px}.field label,.password-row label{display:block;font-size:13px;font-weight:650;margin-bottom:8px}.field input{width:100%;height:47px;border:1px solid var(--line);border-radius:10px;padding:0 13px;font:inherit;outline:none;color:var(--ink);background:#fff}.field input:focus{border-color:var(--brand);box-shadow:0 0 0 3px #3459e61a}.password-row{display:flex;justify-content:space-between;align-items:center}.password-row a,.switch a{color:var(--brand);font-size:12px;font-weight:700;text-decoration:none}.options{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);margin:0 0 22px}.check{display:flex;align-items:center;gap:7px}.check input{accent-color:var(--brand)}.submit{width:100%;height:48px;border:0;border-radius:10px;background:var(--brand);color:white;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 7px 16px #3459e628}.submit:hover{background:var(--brand2)}.divider{display:flex;align-items:center;gap:12px;margin:21px 0;color:#9aa3b2;font-size:11px}.divider:before,.divider:after{content:"";height:1px;background:var(--line);flex:1}.switch{text-align:center;color:var(--muted);font-size:13px;margin:0}.switch a{font-size:13px}.toast{display:none;margin-top:14px;padding:10px 12px;border-radius:9px;background:#fff5db;color:#805600;font-size:12px;line-height:1.5}
+    @media(max-width:720px){.layout{grid-template-columns:1fr}.intro{min-height:auto;padding:29px}.intro h1{font-size:32px}.intro-foot{margin-top:28px}.form-side{padding:32px 25px}.topbar{height:64px}.right .email{display:none}}
+  </style>
+</head>
+<body>
+  <div class="top-wrap">
+    <header class="topbar">
+      <div class="brand"><span class="logo">↻</span><span>Yurt Çamaşırhanesi</span></div>
+      <div class="right">
+        <button class="notice" id="noticeBtn" type="button" aria-label="Mesajlar" aria-expanded="false">✉<span class="dot"></span></button>
+        <div class="email"><span aria-hidden="true">●</span><span>ogrenci@universite.edu.tr</span></div>
+        <div class="avatar" aria-label="Öğrenci profili">Ö</div>
+      </div>
+    </header>
+    <div class="notice-panel" id="noticePanel" role="status"><strong>Mesajlar ve bildirimler</strong><p>Henüz yeni bildiriminiz yok. Randevu ve makine durumuyla ilgili duyurular burada görünecek.</p></div>
+  </div>
+  <main>
+    <section class="layout">
+      <aside class="intro">
+        <div><div class="eyebrow">Kolay · Hızlı · Düzenli</div><h1>Çamaşır gününü planlamak artık daha kolay.</h1><p>Makine durumlarını kontrol et, uygun zamanı seç ve çamaşırhane sürecini tek yerden yönet.</p>
+          <div class="feature"><span class="feature-icon">✓</span><span>Makine uygunluğunu kolayca takip et</span></div>
+          <div class="feature"><span class="feature-icon">◷</span><span>Zamanını önceden planla</span></div>
+        </div><div class="intro-foot">Öğrenci çamaşırhane randevu sistemi</div>
+      </aside>
+      <section class="form-side">
+        <h2>Tekrar hoş geldin</h2><p class="sub">Hesabına giriş yaparak devam et.</p>
+        <form id="loginForm">
+          <div class="field"><label for="email">E-posta adresi</label><input id="email" name="email" type="email" placeholder="ornek@universite.edu.tr" autocomplete="email" required></div>
+          <div class="field"><div class="password-row"><label for="password">Şifre</label><a href="#" id="forgot">Şifremi unuttum</a></div><input id="password" name="password" type="password" placeholder="Şifreni gir" autocomplete="current-password" minlength="6" required></div>
+          <div class="options"><label class="check"><input type="checkbox" name="remember"> Beni hatırla</label><span>Güvenli giriş</span></div>
+          <button class="submit" type="submit">Giriş yap →</button><div class="toast" id="message" role="status"></div>
+        </form>
+        <div class="divider">veya</div><p class="switch">Henüz hesabın yok mu? <a href="/kayit">Kayıt ol</a></p>
+      </section>
+    </section>
+  </main>
+  <script>
+    const btn=document.getElementById('noticeBtn'),panel=document.getElementById('noticePanel');
+    btn.addEventListener('click',()=>{const open=panel.style.display==='block';panel.style.display=open?'none':'block';btn.setAttribute('aria-expanded',String(!open));});
+    const showMessage=(text)=>{const el=document.getElementById('message');el.textContent=text;el.style.display='block';};
+    document.getElementById('loginForm').addEventListener('submit',e=>{e.preventDefault();showMessage('Arayüz şablonu: giriş işleminin çalışması için sunucu tarafında kimlik doğrulaması eklenmelidir.');});
+    document.getElementById('forgot').addEventListener('click',e=>{e.preventDefault();showMessage('Şifre yenileme akışı henüz yapılandırılmadı.');});
+  </script>
+</body>
+</html>
