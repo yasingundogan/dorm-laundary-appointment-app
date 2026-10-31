@@ -1,4 +1,5 @@
 import sqlite3
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 def baglanti_al():
@@ -34,7 +35,36 @@ def makine_durumlari(zaman):
     conn.close()
     return makineler
 
+def ogrenci_ekle(ad, soyad, telefon, email, oda, sifre):
+    sifre_hash = generate_password_hash(sifre) 
+    conn = baglanti_al()
+    cursor = conn.execute(
+        "insert into students (student_name , student_surname , student_phone_no , student_mail , room_no , student_password_hash) values (?,?,?,?,?,?)",
+        (ad, soyad, telefon, email, oda, sifre_hash)
+    )
+    conn.commit()
+    yeni_id = cursor.lastrowid
+    conn.close()
+    return yeni_id
+
+def ogrenci_dogrula(email, sifre):
+    conn = baglanti_al()
+    ogrenci = conn.execute(
+        "select * from students where student_mail = ?",
+        (email, )
+    ).fetchone()
+    conn.close()
+
+    if ogrenci is None:
+        return None
+
+    if check_password_hash(ogrenci["student_password_hash"] , sifre ):
+        return ogrenci
+    return None
+    
+
+
 if __name__ == "__main__":
-    durumlar = makine_durumlari("2026-10-07 14:30:00")
-    print("Toplam:", len(durumlar))
-    print("Dolu:", sum(m["dolu"] for m in durumlar))
+    print(ogrenci_dogrula("ogrenci5@ornek.com", "test1234"))
+    print(ogrenci_dogrula("ogrenci5@ornek.com", "yanlis"))
+    print(ogrenci_dogrula("yok@ornek.com", "test1234"))
