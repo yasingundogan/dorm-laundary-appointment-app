@@ -1,5 +1,7 @@
+from werkzeug.security import generate_password_hash
 import sqlite3
 import random
+
 
 random.seed(48)
 
@@ -26,11 +28,15 @@ for num in range(1,16):
 first_names = ["Ayse", "Zeynep", "Elif", "Nisa", "Eylul", "Fatma" , "Busra" , "Maya"]
 last_names = ["Yilmaz", "Kaya", "Demir", "Celik", "Sahin" , "Yildiz" , "Kara" , "Yildirim"]
 
+TEST_SIFRESI = "test1234"
+sifre_hash = generate_password_hash(TEST_SIFRESI)
 for i in range(1, 1001):
     ad = random.choice(first_names)
     soyad = random.choice(last_names)
     email = f"ogrenci{i}@ornek.com"
     telefon = f"0532{i:07d}"
+    
+    
 
     blok = random.choice(["A", "B", "C", "D"])
     kat = random.randint(1, 5)
@@ -38,8 +44,8 @@ for i in range(1, 1001):
     oda_no = f"{blok}-{kat}{oda:02d}"      # örnek: "B-204"
 
     conn.execute(
-        "insert into students (student_name, student_surname, student_mail , student_phone_no , room_no ) values (?, ?, ?, ?, ?)",
-        (ad , soyad , email , telefon , oda_no )
+        "insert into students (student_name, student_surname, student_mail , student_phone_no , room_no , student_password_hash) values (?, ?, ?, ?, ? ,?)",
+        (ad , soyad , email , telefon , oda_no , sifre_hash )
     )
 
 gunler = [
