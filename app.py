@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for
 from datetime import datetime
 import db
+import sqlite3
 
 app = Flask(__name__)
 
@@ -18,9 +19,39 @@ def giris():
 
 @app.route("/kayit", methods=["GET", "POST"])
 def kayit():
-    # Şablon arayüzüdür; gerçek kayıt/veritabanı işlemi henüz eklenmemiştir.
-    return render_template("kayit.html")
+    if request.method == "GET":
+        return render_template("kayit.html")
 
+    form = request.form
+    sifre = form.get("password", "")
+    sifre_tekrar = form.get("confirm_password")
+    kontrol = ["first_name" , "last_name" , "phone" , "email" , "room" ]
+
+    # 1. Sunucu tarafı kontroller
+    for i in kontrol:
+        if not form.get(i ,"").strip():
+            return render_template("kayit.html" , hata="Boş alan bırakılamaz." , form=form)
+    
+    if sifre != sifre_tekrar :
+        return render_template("kayit.html", hata="Şifreler eşleşmiyor.", form=form)
+    if len(sifre) < 8:
+        return render_template("kayit.html", hata="Şifre 8 karakterden az olamaz.", form=form)
+
+    # 2. Kaydetmeyi dene
+    try:
+        db.ogrenci_ekle(
+            form.get("first_name"),
+            form.get("last_name"),        # soyad
+            form.get("phone"),        # telefon
+            form.get("email"),        # email
+            form.get("room"),        # oda
+            sifre,
+        )
+    except sqlite3.IntegrityError:
+        return render_template("kayit.html", hata="Bu e-posta veya telefon numarası zaten kayıtlı ", form=form)
+
+    # 3. Başarılı: giriş sayfasına yönlendir
+    return redirect(url_for("giris"))
 
 @app.route("/makineler")
 def makine():

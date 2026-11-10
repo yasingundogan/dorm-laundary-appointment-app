@@ -38,14 +38,15 @@ def makine_durumlari(zaman):
 def ogrenci_ekle(ad, soyad, telefon, email, oda, sifre):
     sifre_hash = generate_password_hash(sifre) 
     conn = baglanti_al()
-    cursor = conn.execute(
-        "insert into students (student_name , student_surname , student_phone_no , student_mail , room_no , student_password_hash) values (?,?,?,?,?,?)",
-        (ad, soyad, telefon, email, oda, sifre_hash)
-    )
-    conn.commit()
-    yeni_id = cursor.lastrowid
-    conn.close()
-    return yeni_id
+    try:
+        cursor = conn.execute(
+            "insert into students (student_name , student_surname , student_phone_no , student_mail , room_no , student_password_hash) values (?,?,?,?,?,?)",
+            (ad, soyad, telefon, email, oda, sifre_hash)
+        )
+        conn.commit()
+        return cursor.lastrowid
+    finally:
+        conn.close()
 
 def ogrenci_dogrula(email, sifre):
     conn = baglanti_al()
