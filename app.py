@@ -1,9 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for 
+from flask import session
 from datetime import datetime
 import db
 import sqlite3
-
+import os
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
 
 
 @app.route("/")
@@ -13,8 +15,24 @@ def ana_sayfa():
 
 @app.route("/giris", methods=["GET", "POST"])
 def giris():
-    # Şablon arayüzüdür; gerçek kimlik doğrulaması henüz eklenmemiştir.
-    return render_template("giris.html")
+    if request.method == "GET":
+        return render_template("giris.html")
+
+    form = request.form
+    ogrenci = db.ogrenci_dogrula(form.get("email"), form.get("password"))
+
+    if ogrenci is None:
+        return render_template("giris.html", hata="Giriş bilgileri hatalı.", form=form)
+
+    session.clear()
+    session["student_id"] = ogrenci["student_id"]
+    session["student_name"] = ogrenci["student_name"]
+    return redirect(url_for("makine"))
+
+@app.route("/cikis", methods=["GET", "POST"])
+def cikis():
+    session.clear()
+    return redirect(url_for("giris"))
 
 
 @app.route("/kayit", methods=["GET", "POST"])

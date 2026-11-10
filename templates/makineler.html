@@ -22,10 +22,21 @@
     .durum.bos { background: var(--calisiyor-acik); color: var(--calisiyor); }
     .durum.dolu { background: #fdf0d5; color: #8a5a00; }
     .durum.arizali { background: var(--arizali-acik); color: var(--arizali); }
+    .ust { display: flex; justify-content: flex-end; align-items: center; gap: 14px; font-size: 14px;
+           color: var(--soluk); margin-bottom: 16px; }
+    .ust a { color: var(--yazi); font-weight: 600; }
   </style>
 </head>
 <body>
 <main>
+  <nav class="ust">
+    {% if session.student_id %}
+      <span>Merhaba, <strong>{{ session.student_name }}</strong></span>
+      <a href="{{ url_for('cikis') }}">Çıkış</a>
+    {% else %}
+      <a href="{{ url_for('giris') }}">Giriş yap</a>
+    {% endif %}
+  </nav>
   <h1>Makineler</h1>
   <p class="alt">
     {{ zaman }} itibarıyla ·
