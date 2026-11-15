@@ -37,8 +37,9 @@
       </aside>
       <section class="form-side">
         <h2>Tekrar hoş geldin</h2><p class="sub">Hesabına giriş yaparak devam et.</p>
-        <form id="loginForm">
-          <div class="field"><label for="email">E-posta adresi</label><input id="email" name="email" type="email" placeholder="ornek@universite.edu.tr" autocomplete="email" required></div>
+        <form id="loginForm" method="post" action="/giris">
+          {% if hata %}<div class="toast" style="display:block;margin:0 0 16px">{{ hata }}</div>{% endif %}
+          <div class="field"><label for="email">E-posta adresi</label><input id="email" name="email" type="email" value="{{ (form or {}).get('email', '') }}" placeholder="ornek@universite.edu.tr" autocomplete="email" required></div>
           <div class="field"><div class="password-row"><label for="password">Şifre</label><a href="#" id="forgot">Şifremi unuttum</a></div><input id="password" name="password" type="password" placeholder="Şifreni gir" autocomplete="current-password" minlength="6" required></div>
           <div class="options"><label class="check"><input type="checkbox" name="remember"> Beni hatırla</label><span>Güvenli giriş</span></div>
           <button class="submit" type="submit">Giriş yap →</button><div class="toast" id="message" role="status"></div>
@@ -51,7 +52,6 @@
     const btn=document.getElementById('noticeBtn'),panel=document.getElementById('noticePanel');
     btn.addEventListener('click',()=>{const open=panel.style.display==='block';panel.style.display=open?'none':'block';btn.setAttribute('aria-expanded',String(!open));});
     const showMessage=(text)=>{const el=document.getElementById('message');el.textContent=text;el.style.display='block';};
-    document.getElementById('loginForm').addEventListener('submit',e=>{e.preventDefault();showMessage('Arayüz şablonu: giriş işleminin çalışması için sunucu tarafında kimlik doğrulaması eklenmelidir.');});
     document.getElementById('forgot').addEventListener('click',e=>{e.preventDefault();showMessage('Şifre yenileme akışı henüz yapılandırılmadı.');});
   </script>
 </body>

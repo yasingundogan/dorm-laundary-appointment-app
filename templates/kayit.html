@@ -24,12 +24,14 @@
         <div class="feature"><span class="feature-icon">✓</span><span>Hızlı ve basit hesap oluşturma</span></div><div class="feature"><span class="feature-icon">◷</span><span>Randevu süreçlerini tek yerden takip et</span></div><div class="feature"><span class="feature-icon">⌁</span><span>Makine uygunluğunu kolayca kontrol et</span></div>
       </div><div class="intro-foot">Öğrenci çamaşırhane randevu sistemi</div></aside>
       <section class="form-side"><h2>Yeni hesap oluştur</h2><p class="sub">Bilgilerini doldurarak birkaç adımda kayıt ol.</p>
-        <form id="signupForm"><div class="fields">
-          <div class="field"><label for="firstName">Ad</label><input id="firstName" name="first_name" autocomplete="given-name" placeholder="Adın" required></div>
-          <div class="field"><label for="lastName">Soyad</label><input id="lastName" name="last_name" autocomplete="family-name" placeholder="Soyadın" required></div>
-          <div class="field full"><label for="email">Üniversite e-posta adresi</label><input id="email" name="email" type="email" autocomplete="email" placeholder="ornek@universite.edu.tr" required></div>
-          <div class="field"><label for="studentNo">Öğrenci numarası</label><input id="studentNo" name="student_no" inputmode="numeric" placeholder="Öğrenci numaran" required></div>
-          <div class="field"><label for="room">Yurt / oda bilgisi</label><input id="room" name="room" placeholder="Blok ve oda" required></div>
+        <form id="signupForm" method="post" action="/kayit">
+        {% if hata %}<div class="toast" style="display:block;margin:0 0 16px">{{ hata }}</div>{% endif %}
+        <div class="fields">
+          <div class="field"><label for="firstName">Ad</label><input id="firstName" name="first_name" value="{{ (form or {}).get('first_name', '') }}" autocomplete="given-name" placeholder="Adın" required></div>
+          <div class="field"><label for="lastName">Soyad</label><input id="lastName" name="last_name" value="{{ (form or {}).get('last_name', '') }}" autocomplete="family-name" placeholder="Soyadın" required></div>
+          <div class="field full"><label for="email">Üniversite e-posta adresi</label><input id="email" name="email" type="email" value="{{ (form or {}).get('email', '') }}" autocomplete="email" placeholder="ornek@universite.edu.tr" required></div>
+          <div class="field"><label for="phone">Telefon</label><input id="phone" name="phone" type="tel" value="{{ (form or {}).get('phone', '') }}" autocomplete="tel" placeholder="05xx xxx xx xx" required></div>
+          <div class="field"><label for="room">Yurt / oda bilgisi</label><input id="room" name="room" value="{{ (form or {}).get('room', '') }}" placeholder="Blok ve oda" required></div>
           <div class="field"><label for="password">Şifre</label><input id="password" name="password" type="password" autocomplete="new-password" placeholder="En az 8 karakter" minlength="8" required></div>
           <div class="field"><label for="confirmPassword">Şifre tekrarı</label><input id="confirmPassword" name="confirm_password" type="password" autocomplete="new-password" placeholder="Şifreni tekrar gir" minlength="8" required></div>
         </div>
@@ -42,7 +44,7 @@
   <script>
     const btn=document.getElementById('noticeBtn'),panel=document.getElementById('noticePanel');btn.addEventListener('click',()=>{const open=panel.style.display==='block';panel.style.display=open?'none':'block';btn.setAttribute('aria-expanded',String(!open));});
     const showMessage=(text)=>{const el=document.getElementById('message');el.textContent=text;el.style.display='block';};
-    document.getElementById('signupForm').addEventListener('submit',e=>{e.preventDefault();const p=document.getElementById('password').value,c=document.getElementById('confirmPassword').value;if(p!==c){showMessage('Şifreler eşleşmiyor.');return;}showMessage('Arayüz şablonu: gerçek kayıt için sunucu tarafı doğrulaması ve kullanıcı veritabanı eklenmelidir.');});
+    document.getElementById('signupForm').addEventListener('submit',e=>{const p=document.getElementById('password').value,c=document.getElementById('confirmPassword').value;if(p!==c){e.preventDefault();showMessage('Şifreler eşleşmiyor.');}});
     document.getElementById('terms').addEventListener('click',e=>{e.preventDefault();showMessage('Kullanım koşulları bağlantısı henüz yapılandırılmadı.');});
   </script>
 </body>
