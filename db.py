@@ -1,9 +1,11 @@
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
+DB_PATH =os.environ.get("DB_PATH" , "camasirhane.db")
 
 def baglanti_al():
-    conn = sqlite3.connect("camasirhane.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
