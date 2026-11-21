@@ -14,7 +14,7 @@
     h1 { font-size: 26px; margin: 0 0 4px; }
     .alt { color: var(--soluk); margin: 0 0 24px; }
     h2 { font-size: 18px; margin: 28px 0 10px; }
-    .izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+    .izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; }
     .makine { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 8px;
               padding: 10px; text-align: center; }
     .no { font-size: 22px; font-weight: 700; }
@@ -25,6 +25,15 @@
     .ust { display: flex; justify-content: flex-end; align-items: center; gap: 14px; font-size: 14px;
            color: var(--soluk); margin-bottom: 16px; }
     .ust a { color: var(--yazi); font-weight: 600; }
+    .secici { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 18px; }
+    .secici input, .secici select, .al select { font: inherit; padding: 6px 8px; border: 1px solid var(--cizgi);
+           border-radius: 6px; background: var(--kart); color: var(--yazi); }
+    button { font: inherit; padding: 6px 12px; border: 0; border-radius: 6px; background: var(--yazi); color: #fff; cursor: pointer; }
+    .al { display: grid; gap: 6px; margin-top: 8px; }
+    .al select, .al button { width: 100%; font-size: 13px; }
+    .mesaj { padding: 10px 12px; border-radius: 8px; margin: 0 0 16px; font-size: 14px; }
+    .mesaj.basarili { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .mesaj.hata { background: var(--arizali-acik); color: var(--arizali); }
   </style>
 </head>
 <body>
@@ -38,6 +47,23 @@
     {% endif %}
   </nav>
   <h1>Makineler</h1>
+
+  {% with mesajlar = get_flashed_messages(with_categories=true) %}
+    {% for tur, mesaj in mesajlar %}
+      <div class="mesaj {{ tur }}">{{ mesaj }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {# Gün ve saat seçimi: seçilen saatte hangi makinelerin boş olduğunu gösterir #}
+  <form method="get" class="secici">
+    <input type="date" name="gun" value="{{ zaman[:10] }}" aria-label="Gün">
+    <select name="saat" aria-label="Saat">
+      {% for s in range(8, 20) %}
+        <option value="{{ s }}" {% if zaman[11:13] | int == s %}selected{% endif %}>{{ "%02d:00" % s }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Göster</button>
+  </form>
   <p class="alt">
     {{ zaman }} itibarıyla ·
     {{ makineler | selectattr("dolu", "equalto", 0) | selectattr("out_of_order", "equalto", 0) | list | length }}
@@ -57,6 +83,20 @@
             <span class="durum dolu">Dolu</span>
           {% else %}
             <span class="durum bos">Boş</span>
+            {% if session.student_id %}
+              {# Randevu formu: makine ve saat gizli alanlarla /randevu adresine gönderilir #}
+              <form method="post" action="/randevu" class="al">
+                <input type="hidden" name="machine_id" value="{{ m['machine_id'] }}">
+                <input type="hidden" name="start_time" value="{{ zaman }}">
+                {% if tip == "washer" %}
+                  <select name="program" aria-label="Program">
+                    <option value="colored">Renkli</option>
+                    <option value="white">Beyaz</option>
+                  </select>
+                {% endif %}
+                <button type="submit">Randevu al</button>
+              </form>
+            {% endif %}
           {% endif %}
         </div>
       {% endfor %}
