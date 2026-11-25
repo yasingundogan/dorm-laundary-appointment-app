@@ -1,0 +1,21 @@
+{# Form sayfalarının ortak görünümü (arıza bildirme, kayıp eşya, profil düzenleme) #}
+<style>
+    .geri { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; margin-bottom: 14px;
+            border: 1px solid var(--cizgi); border-radius: 999px; background: var(--kart);
+            color: var(--yazi); font-size: 14px; font-weight: 600; text-decoration: none; }
+    .aciklama { color: var(--soluk); margin: 0 0 16px; line-height: 1.55; }
+    form.kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 20px; padding: 20px;
+                box-shadow: var(--golge); display: grid; gap: 14px; }
+    .alan { display: grid; gap: 6px; }
+    .alan label { font-size: 13px; font-weight: 650; }
+    .alan input, .alan select, .alan textarea { font: inherit; border: 1px solid var(--cizgi); border-radius: 12px;
+            padding: 10px 12px; background: var(--kart); color: var(--yazi); width: 100%; }
+    .alan textarea { min-height: 96px; resize: vertical; }
+    .alan input:focus, .alan select:focus, .alan textarea:focus { outline: none; border-color: var(--marka);
+            box-shadow: 0 0 0 3px #14171f1f; }
+    .alan input[readonly] { background: var(--kart-2); color: var(--soluk); }
+    .ipucu { font-size: 12px; color: var(--soluk); }
+    .dugmeler { display: flex; justify-content: flex-end; align-items: center; gap: 12px; }
+    main.uygulama .dugmeler button { padding: 10px 20px; }
+    .vazgec { color: var(--soluk); font-size: 14px; }
+</style>

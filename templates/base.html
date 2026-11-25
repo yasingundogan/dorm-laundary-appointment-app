@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block baslik %}{% endblock %} · DormLaundary App</title>
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/logo.svg') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='img/favicon-32.png') }}">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/apple-touch-icon.png') }}">
+  <style>
+    /* Temiz beyaz tema: beyaz yüzeyler, mürekkep siyahı yazı ve ana düğmeler, ince sıcak gri çizgiler.
+       Vurgu renkleri yalnızca anlam taşır: çamaşır safir mavisi, kurutma bakır, arıza kırmızı, başarı yeşil.
+       Bütün sayfalar bu değişkenleri kullanır. */
+    :root { --bg: #ffffff; --kart: #ffffff; --kart-2: #f5f4f1; --yazi: #14171f; --soluk: #6b6f7a; --cizgi: #ebe8e1;
+            --marka: #14171f; --marka-koyu: #000000; --marka-acik: #f1f0ec; --marka-yazi: #ffffff;
+            --camasir: #1f5ea8; --camasir-acik: #e6eefa; --kurutma: #b45f22; --kurutma-acik: #fcefe4;
+            --arizali: #c4231a; --arizali-acik: #fdecea; --bant: #f5c518;
+            --calisiyor: #1a7f4b; --calisiyor-acik: #e4f5ec; --dolu: #9aa0ab; --dolu-acik: #f1f1ef;
+            --golge: 0 1px 2px #14171f0a, 0 8px 24px #14171f0d; --ust-bg: #ffffffb3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--yazi);
+           font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto,
+                        "Helvetica Neue", Arial, sans-serif;
+           -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+    /* Yazı tipi: cihazın sistem yazı tipi. iPhone/Mac'te Apple'ın SF Pro'su, Android'de Roboto, Windows'ta Segoe UI.
+       SF Pro'nun lisansı web sunucusundan dağıtılmasına izin vermez; sistem yazı tipi hiçbir dosya indirmez. */
+    a { color: var(--marka); }
+    :focus-visible { outline: 3px solid var(--marka); outline-offset: 2px; }
+    .topbar { position: sticky; top: 0; z-index: 10; height: 64px; padding: 0 clamp(16px, 5vw, 64px); display: flex;
+              align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--cizgi);
+              background: var(--ust-bg); -webkit-backdrop-filter: blur(16px) saturate(1.8); backdrop-filter: blur(16px) saturate(1.8);
+              border-bottom-color: #14171f12; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 17px; letter-spacing: -.2px;
+             color: var(--yazi); text-decoration: none; }
+    .logo { width: 36px; height: 36px; display: block; border-radius: 25%; box-shadow: 0 3px 8px #14171f33;
+            transition: transform .15s; }
+    .brand:hover .logo { transform: rotate(-8deg) scale(1.05); }
+    .brand:focus-visible { outline: 3px solid var(--marka); outline-offset: 4px; border-radius: 12px; }
+    @media (prefers-reduced-motion: reduce) { .logo { transition: none; } }
+
+    .ust { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--soluk); }
+    .ust a { color: var(--yazi); font: inherit; font-weight: 600; }
+    /* Çıkış: ikonlu hap düğme, ne yaptığı açık */
+    .cikis { margin: 0; }
+    .cikis button { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px;
+                    border: 1px solid var(--cizgi); border-radius: 999px; background: var(--kart); color: var(--yazi);
+                    font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .cikis button:hover { border-color: var(--arizali); color: var(--arizali); background: var(--arizali-acik); }
+    .cikis svg { width: 17px; height: 17px; }
+    /* Dar ekranda yalnızca ikon kalır; "Çıkış yap" ekran okuyucu için okunmaya devam eder */
+    @media (max-width: 620px) { .cikis-yazi { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+                                .cikis button { width: 36px; padding: 0; justify-content: center; }
+                                .profil-link .ad { display: none; } }
+    .profil-link { display: flex; align-items: center; gap: 8px; text-decoration: none; }
+    /* Anonim profil görseli: gri zemin üzerinde siluet */
+    .avatar { width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: end center; overflow: hidden;
+              background: var(--kart-2); color: #a7abb6; border: 1px solid var(--cizgi); flex: none; }
+    .avatar svg { width: 100%; height: 100%; }
+    .brand-ad, .cikis button { white-space: nowrap; }
+    @media (max-width: 560px) { .brand-ad { display: none; } .ust { gap: 6px; } }
+
+    /* Uygulama sayfaları (makineler, profil) */
+    main.uygulama { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    main.uygulama h1 { font-size: 34px; font-weight: 800; letter-spacing: -.8px; line-height: 1.1; margin: 0 0 6px; }
+    main.uygulama h2 { font-weight: 800; }
+    main.uygulama h2 { font-size: 18px; margin: 28px 0 10px; }
+    /* :where ile önceliği düşük tutulur: sayfadaki özel düğme kuralları (ör. zaman şeridi hücreleri) her zaman kazanır */
+    :where(main.uygulama) button { font: inherit; font-weight: 650; padding: 7px 14px; border: 0; border-radius: 999px;
+                           background: var(--marka); color: var(--marka-yazi); cursor: pointer; }
+    :where(main.uygulama) button:hover { background: var(--marka-koyu); }
+    /* Üst panel bağlantıları: açık gri yazı, bulunulan sayfa koyu */
+    .ust-link { color: var(--soluk) !important; font-weight: 650 !important; text-decoration: none; white-space: nowrap;
+                display: inline-flex; align-items: center; gap: 6px; padding: 6px 4px; }
+    .ust-link:hover, .ust-link[aria-current] { color: var(--yazi) !important; }
+    .rozet-sayi { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: #d93848; color: #fff;
+                  font-size: 11px; font-weight: 800; display: inline-grid; place-items: center; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    .profil-link { color: var(--soluk) !important; }
+    .profil-link:hover, .profil-link[aria-current] { color: var(--yazi) !important; }
+    .mesajlar { max-width: 720px; margin: 16px auto 0; padding: 0 16px; }
+    .mesaj { padding: 10px 14px; border-radius: 12px; margin: 0 0 16px; font-size: 14px; }
+    .mesaj.oneri { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px;
+                   background: var(--kurutma-acik); color: var(--yazi); }
+    .mesaj.oneri svg { width: 22px; height: 22px; color: var(--kurutma); flex: none; }
+    .mesaj.oneri span { flex: 1; min-width: 180px; }
+    .mesaj.oneri a { color: var(--kurutma); font-weight: 700; }
+    .mesaj.basarili { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .mesaj.hata { background: var(--arizali-acik); color: var(--arizali); }
+  </style>
+  {% block stil %}{% endblock %}
+</head>
+<body class="{% block govde_sinifi %}{% endblock %}">
+{% include "_ikonlar.html" %}
+{% from "_avatar.html" import avatar %}
+<header class="topbar">
+  {# Logo (static/img/logo.svg): makine kartlarıyla aynı çizgi dili; ana ekrana (makineler) döner #}
+  <a class="brand" href="{{ url_for('randevu.makine') }}" aria-label="DormLaundary App, ana ekran">
+    <img class="logo" src="{{ url_for('static', filename='img/logo.svg') }}" alt="" width="36" height="36">
+    <span class="brand-ad">DormLaundary App</span>
+  </a>
+  <nav class="ust" aria-label="Hesap">
+    {% block ust %}
+      {% if session.student_id %}
+        <a href="{{ url_for('bildirim.bildirimler') }}" class="ust-link"
+           {% if request.endpoint == 'bildirim.bildirimler' %}aria-current="page"{% endif %}>
+          Bildirimler{% if okunmamis_bildirim %}<span class="rozet-sayi"><span class="sr">, okunmamış: </span>{{ okunmamis_bildirim if okunmamis_bildirim < 10 else "9+" }}</span>{% endif %}
+        </a>
+        <a href="{{ url_for('yurt.kayip_esya') }}" class="ust-link"
+           {% if request.endpoint == 'yurt.kayip_esya' %}aria-current="page"{% endif %}>Kayıp eşya</a>
+        <a href="{{ url_for('profil.profil') }}" class="profil-link" title="Profilim ve randevularım"
+           {% if request.endpoint and request.endpoint.startswith('profil.') %}aria-current="page"{% endif %}>
+          {{ avatar() }}
+          <span class="ad">{{ session.student_name }}</span>
+        </a>
+        {% include "_cikis.html" %}
+      {% else %}
+        <a href="{{ url_for('auth.giris') }}">Giriş yap</a>
+      {% endif %}
+    {% endblock %}
+  </nav>
+</header>
+{# Flash mesajları: her sayfada üst çubuğun hemen altında #}
+{% with mesajlar = get_flashed_messages(with_categories=true) %}
+  {% if mesajlar %}
+  <div class="mesajlar" role="status">
+    {% for tur, mesaj in mesajlar %}
+      {% if tur == "oneri" %}
+        <div class="mesaj oneri">
+          <svg aria-hidden="true"><use href="#ikon-dryer"/></svg>
+          <span>Çamaşırın {{ mesaj.saat }}'de bitiyor. Kurutmayı da şimdi ayırmak ister misin?</span>
+          <a href="{{ mesaj.url }}">Kurutma makinesi seç →</a>
+        </div>
+      {% else %}
+        <div class="mesaj {{ tur }}">{{ mesaj }}</div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+{% block icerik %}{% endblock %}
+{% block script %}{% endblock %}
+</body>
+</html>
+

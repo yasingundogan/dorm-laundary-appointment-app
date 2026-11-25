@@ -1,0 +1,84 @@
+{# Giriş ve kayıt sayfalarının ortak görünümü: tam ekran fotoğraf + beyaz form kartı #}
+<style>
+    /* ---- Tam ekran fotoğraf: üst çubuk fotoğrafın üstünde saydam durur ---- */
+    .fotograf-sayfa .topbar { position: absolute; inset: 0 0 auto; background: transparent; border-color: #ffffff26;
+                              backdrop-filter: none; }
+    .fotograf-sayfa .brand, .fotograf-sayfa .ust { color: #fff; }
+    .ust-dugme { color: #fff !important; text-decoration: none; padding: 7px 16px; border: 1px solid #ffffff59;
+                 border-radius: 999px; font-weight: 700; }
+    .ust-dugme:hover { background: #ffffff1f; }
+
+    .sahne { position: relative; min-height: 100vh; display: grid; grid-template-columns: 1.15fr minmax(340px, 420px);
+             align-items: end; gap: 48px; padding: 120px clamp(20px, 6vw, 88px) clamp(32px, 7vh, 72px); color: #fff;
+             isolation: isolate; }
+    /* Fotoğraf + yazının okunması için soldan ve alttan koyulaşan örtü */
+    .sahne picture, .sahne picture img { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -2; }
+    .sahne picture img { object-fit: cover; object-position: 60% 50%; }
+    .sahne::before { content: ""; position: absolute; inset: 0; z-index: -1;
+                     background: linear-gradient(90deg, #0b0e16e6 0%, #0b0e16a6 45%, #0b0e1640 100%),
+                                 linear-gradient(0deg, #0b0e16cc 0%, transparent 45%); }
+
+    .ust-etiket { font-size: 12px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase;
+                  color: #d6bd8e; margin: 0 0 18px; }
+    /* Başlık, ekranın değil kendi sütununun genişliğine göre boyutlanır (container query):
+       en uzun kelime ("çamaşırhanesine", 15 harf) her genişlikte sütuna sığar, forma taşmaz */
+    .tanitim { min-width: 0; container-type: inline-size; }
+    .sahne h1 { font-size: clamp(30px, 10.5cqi, 84px); font-weight: 800; line-height: .98; letter-spacing: -1.5px;
+                margin: 0 0 22px; max-width: 11ch; }
+    .sahne .metin { font-size: 18px; line-height: 1.6; color: #ffffffcc; max-width: 46ch; margin: 0 0 30px; }
+    .hap { white-space: nowrap; display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 999px;
+           font-weight: 800; text-decoration: none; border: 1px solid #ffffff59; color: #fff; }
+    .hap:hover { background: #ffffff1f; }
+    .hap svg { width: 20px; height: 20px; }
+    .kunye { position: absolute; left: clamp(20px, 6vw, 88px); bottom: 12px; font-size: 11px; color: #ffffff80; }
+    .kunye a { color: inherit; }
+
+    /* ---- Giriş kartı ---- */
+    .kart { background: var(--kart); color: var(--yazi); border-radius: 28px; padding: 32px 30px 26px;
+            box-shadow: 0 30px 80px #00000059; }
+    .kart h2 { font-size: 26px; font-weight: 800; letter-spacing: -.4px; margin: 0 0 22px; }
+    .alan { display: grid; gap: 7px; margin-bottom: 16px; }
+    .alan label { font-size: 13px; font-weight: 750; }
+    .alan input { width: 100%; height: 50px; border: 1.5px solid var(--cizgi); border-radius: 14px; padding: 0 14px;
+                  font: inherit; font-size: 16px; color: var(--yazi); background: var(--kart); }
+    .alan input:focus { outline: none; border-color: var(--yazi); box-shadow: 0 0 0 4px #14171f14; }
+    .sifre { position: relative; }
+    .sifre input { padding-right: 52px; }
+    .goster { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px;
+              border: 0; border-radius: 10px; background: none; color: var(--soluk); cursor: pointer; display: grid; place-items: center; }
+    .goster:hover { background: var(--kart-2); color: var(--yazi); }
+    .goster svg { width: 20px; height: 20px; }
+    .uyari { font-size: 12px; color: var(--kurutma); font-weight: 700; }
+    .hata { margin: 0 0 16px; padding: 11px 14px; border-radius: 12px; background: var(--arizali-acik);
+            color: var(--arizali); font-size: 14px; font-weight: 600; }
+    .gonder { width: 100%; height: 52px; margin-top: 6px; border: 0; border-radius: 999px; background: var(--yazi);
+              color: #fff; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+    .gonder:hover { background: #000; }
+    .gonder:disabled { opacity: .7; cursor: progress; }
+    .alt { margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--cizgi); display: grid; gap: 6px;
+           font-size: 14px; color: var(--soluk); }
+    .alt a { color: var(--yazi); font-weight: 800; }
+
+    /* ---- Telefon: dikey fotoğraf üstte, kart alttan yukarı doğru üstüne biner ---- */
+    @media (max-width: 860px) {
+      .sahne { min-height: 0; grid-template-columns: 1fr; gap: 0; padding: 0; align-items: start; }
+      .sahne picture { position: relative; display: block; height: 48vh; min-height: 300px; }
+      .sahne picture img { position: absolute; }
+      .sahne::before { height: 48vh; min-height: 300px; background: linear-gradient(0deg, #0b0e16f2 0%, #0b0e1666 55%, #0b0e1633 100%); }
+      .tanitim { position: absolute; left: 20px; right: 20px; top: calc(max(48vh, 300px) - 230px); }
+      .sahne h1 { font-size: clamp(28px, 10.5cqi, 42px); margin-bottom: 10px; }
+      .sahne .metin { font-size: 15px; margin: 0; }
+      .ust-etiket { margin-bottom: 10px; }
+      .tanitim .hap, .kunye { display: none; }
+      .kart { position: relative; margin-top: -26px; border-radius: 28px 28px 0 0; box-shadow: none; padding: 28px 20px 32px; }
+    }
+
+    /* ---- Kayıt: daha geniş kart, yan yana alanlar ---- */
+    @media (min-width: 861px) { .sahne.genis { grid-template-columns: 1fr minmax(360px, 540px); } }
+    .ikili { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .alan select { width: 100%; height: 50px; border: 1.5px solid var(--cizgi); border-radius: 14px; padding: 0 12px;
+                   font: inherit; font-size: 16px; color: var(--yazi); background: var(--kart); }
+    .alan select:focus { outline: none; border-color: var(--yazi); box-shadow: 0 0 0 4px #14171f14; }
+    .ipucu { font-size: 12px; color: var(--soluk); }
+    @media (max-width: 480px) { .ikili { grid-template-columns: 1fr; } }
+</style>

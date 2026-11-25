@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% from "_makine_cizim.html" import cizim %}
+{% block baslik %}Arıza Bildir{% endblock %}
+
+{% block stil %}
+{% include "_sayfa_stil.html" %}
+{% include "_cizim_stil.html" %}
+<style>
+    .makine-ozet { display: flex; align-items: center; gap: 14px; margin: 0 0 16px; }
+    .makine-ozet .cizim { width: 64px; flex: none; }
+    .makine-ozet { --vurgu: var({{ "--kurutma" if makine["machine_type"] == "dryer" else "--camasir" }}); --vurgu-acik: var(--kart-2); }
+    .makine-ozet .cizim { margin: 0; }
+    .hizli { display: flex; flex-wrap: wrap; gap: 6px; }
+    main.uygulama .hizli button { background: var(--kart-2); color: var(--yazi); font-size: 13px; font-weight: 600; padding: 6px 12px; }
+</style>
+{% endblock %}
+
+{% block icerik %}
+{% set ad = ("Kurutma" if makine["machine_type"] == "dryer" else "Çamaşır") ~ " makinesi " ~ makine["machine_no"] %}
+<main class="uygulama">
+  <a href="{{ url_for('randevu.makine') }}" class="geri"><span aria-hidden="true">←</span> Makineler</a>
+  <h1>Arıza bildir</h1>
+  <div class="makine-ozet">
+    {{ cizim("ozet", makine["machine_type"], "uygun") }}
+    <div><strong>{{ ad }}</strong><div class="ipucu">Bildirimin yurt görevlisine iletilir. Görevli onaylayınca makine arızalı olarak işaretlenir.</div></div>
+  </div>
+
+  {% if hata %}<div class="mesaj hata" role="alert">{{ hata }}</div>{% endif %}
+  <form method="post" enctype="multipart/form-data" class="kart">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div class="alan">
+      <label for="aciklama">Sorun ne?</label>
+      {# Sık karşılaşılan sorunlar tek dokunuşla yazılır #}
+      <div class="hizli" aria-label="Hazır seçenekler">
+        {% for h in ["Su boşaltmıyor", "Kapak açılmıyor", "Çalışmıyor", "Su sızdırıyor", "Isıtmıyor", "Çok ses yapıyor"] %}
+          <button type="button" data-metin="{{ h }}">{{ h }}</button>
+        {% endfor %}
+      </div>
+      <textarea id="aciklama" name="description" maxlength="500" required minlength="5"
+                placeholder="ör. Program bitti ama su boşaltmıyor, kapak kilitli kaldı.">{{ aciklama or "" }}</textarea>
+    </div>
+    <div class="alan">
+      <label for="foto">Fotoğraf <span class="ipucu">(isteğe bağlı · JPG, PNG, WEBP · en fazla 5 MB)</span></label>
+      <input id="foto" name="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+      <span class="ipucu">Fotoğrafta kişi ya da kişisel eşya görünmemesine dikkat et.</span>
+    </div>
+    <div class="dugmeler">
+      <a href="{{ url_for('randevu.makine') }}" class="vazgec">Vazgeç</a>
+      <button type="submit">Bildir</button>
+    </div>
+  </form>
+</main>
+{% endblock %}
+
+{% block script %}
+<script>
+  const metin = document.getElementById("aciklama");
+  document.querySelector(".hizli").addEventListener("click", e => {
+    const b = e.target.closest("button[data-metin]");
+    if (!b) return;
+    metin.value = metin.value.trim() ? `${metin.value.trim()}. ${b.dataset.metin}` : b.dataset.metin;
+    metin.focus();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block baslik %}Bildirimler{% endblock %}
+
+{% block stil %}
+<style>
+    .geri { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; margin-bottom: 14px;
+            border: 1px solid var(--cizgi); border-radius: 999px; background: var(--kart);
+            color: var(--yazi); font-size: 14px; font-weight: 600; text-decoration: none; }
+    ul { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 8px; }
+    li { display: flex; gap: 12px; align-items: flex-start; background: var(--kart); border: 1px solid var(--cizgi);
+         border-radius: 10px; padding: 12px; }
+    li.yeni { border-left: 4px solid var(--marka); background: var(--marka-acik); }
+    .ikon { flex: none; width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center;
+            background: var(--marka-acik); color: var(--marka); }
+    .ikon svg { width: 20px; height: 20px; }
+    .ikon.bitti { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .ikon.sira { background: var(--kurutma-acik); color: var(--kurutma); }
+    .metin { flex: 1; min-width: 0; }
+    .tarih { font-size: 12px; color: var(--soluk); margin-top: 3px; }
+    .metin a { font-weight: 600; color: var(--marka); font-size: 14px; }
+    .bos-liste { color: var(--soluk); }
+</style>
+{% endblock %}
+
+{% block icerik %}
+<main class="uygulama">
+  <a href="{{ url_for('randevu.makine') }}" class="geri" id="geri"><span aria-hidden="true">←</span> Geri</a>
+  <h1>Bildirimler</h1>
+  {% if bildirimler %}
+    {% set basliklar = {"hatirlatma": "Hatırlatma", "bitti": "Çamaşırın hazır", "sira": "Sıradaki yer boşaldı"} %}
+    <ul>
+      {% for b in bildirimler %}
+        <li class="{{ 'yeni' if not b['read_at'] }}">
+          <span class="ikon {{ b['kind'] }}" aria-hidden="true"><svg><use href="#ikon-zil"/></svg></span>
+          <div class="metin">
+            <strong>{{ basliklar[b["kind"]] }}</strong>{% if not b["read_at"] %} <span class="tarih">· Yeni</span>{% endif %}
+            <div>{{ b["message"] }}</div>
+            <div class="tarih">{{ b["created_at"][8:10] }}.{{ b["created_at"][5:7] }} {{ b["created_at"][11:16] }}</div>
+            {% if b["link"] %}<a href="{{ b['link'] }}">{{ "Makineye git →" if b["kind"] == "sira" else "Randevularım →" }}</a>{% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="bos-liste">Henüz bildirimin yok. Randevun yaklaşınca, çamaşırın bitince ya da sırada beklediğin saat boşalınca burada görürsün.</p>
+  {% endif %}
+</main>
+{% endblock %}
+
+{% block script %}
+<script>
+  document.getElementById("geri").addEventListener("click", e => {
+    if (document.referrer.startsWith(location.origin)) { e.preventDefault(); history.back(); }
+  });
+</script>
+{% endblock %}

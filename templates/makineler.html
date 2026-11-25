@@ -1,108 +1,434 @@
-<!doctype html>
-<html lang="tr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Makineler · Yurt Çamaşırhanesi</title>
-  <style>
-    :root { --bg: #f3f5f8; --kart: #ffffff; --yazi: #18202e; --soluk: #5b6578; --cizgi: #d9dee7;
-            --arizali: #b3261e; --arizali-acik: #fbe9e7; --calisiyor: #2e7d5b; --calisiyor-acik: #e2f1ea; }
-    * { box-sizing: border-box; }
-    body { margin: 0; background: var(--bg); color: var(--yazi);
-           font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
-    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
-    h1 { font-size: 26px; margin: 0 0 4px; }
-    .alt { color: var(--soluk); margin: 0 0 24px; }
-    h2 { font-size: 18px; margin: 28px 0 10px; }
-    .izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; }
-    .makine { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 8px;
-              padding: 10px; text-align: center; }
-    .no { font-size: 22px; font-weight: 700; }
-    .durum { font-size: 12px; margin-top: 4px; padding: 2px 6px; border-radius: 999px; display: inline-block; }
-    .durum.bos { background: var(--calisiyor-acik); color: var(--calisiyor); }
-    .durum.dolu { background: #fdf0d5; color: #8a5a00; }
-    .durum.arizali { background: var(--arizali-acik); color: var(--arizali); }
-    .ust { display: flex; justify-content: flex-end; align-items: center; gap: 14px; font-size: 14px;
-           color: var(--soluk); margin-bottom: 16px; }
-    .ust a { color: var(--yazi); font-weight: 600; }
-    .secici { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 18px; }
-    .secici input, .secici select, .al select { font: inherit; padding: 6px 8px; border: 1px solid var(--cizgi);
-           border-radius: 6px; background: var(--kart); color: var(--yazi); }
-    button { font: inherit; padding: 6px 12px; border: 0; border-radius: 6px; background: var(--yazi); color: #fff; cursor: pointer; }
-    .al { display: grid; gap: 6px; margin-top: 8px; }
-    .al select, .al button { width: 100%; font-size: 13px; }
-    .mesaj { padding: 10px 12px; border-radius: 8px; margin: 0 0 16px; font-size: 14px; }
-    .mesaj.basarili { background: var(--calisiyor-acik); color: var(--calisiyor); }
-    .mesaj.hata { background: var(--arizali-acik); color: var(--arizali); }
-  </style>
-</head>
-<body>
-<main>
-  <nav class="ust">
-    {% if session.student_id %}
-      <a href="/randevularim">Randevularım</a>
-      <span>Merhaba, <strong>{{ session.student_name }}</strong></span>
-      <a href="{{ url_for('cikis') }}">Çıkış</a>
-    {% else %}
-      <a href="{{ url_for('giris') }}">Giriş yap</a>
-    {% endif %}
-  </nav>
-  <h1>Makineler</h1>
+{% extends "base.html" %}
+{% from "_makine_cizim.html" import cizim %}
+{% block baslik %}Makineler{% endblock %}
 
-  {% with mesajlar = get_flashed_messages(with_categories=true) %}
-    {% for tur, mesaj in mesajlar %}
-      <div class="mesaj {{ tur }}">{{ mesaj }}</div>
+{% block stil %}
+{% include "_cizim_stil.html" %}
+<style>
+    .baslik-satir { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+    /* Üst etiket: küçük, büyük harfli, aralıklı */
+    p.camasirhane { color: var(--kurutma); font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 22px; }
+    form.camasirhane { color: var(--soluk); font-size: 15px; margin: 0 0 18px; }
+    .camasirhane select { font: inherit; padding: 6px 10px; border: 1px solid var(--cizgi); border-radius: 999px;
+                          background: var(--kart); color: var(--yazi); }
+
+    /* Gün şeridi: yatay kaydırılır, günler ortaya oturur. Kenar boşluğu ilk/son günün de ortalanabilmesi için. */
+    .gunler { display: flex; gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory;
+              padding: 6px calc(50% - 32px) 12px; margin: 0 -16px 10px; scrollbar-width: none; }
+    .gunler::-webkit-scrollbar { display: none; }
+    .gun { flex: none; width: 64px; scroll-snap-align: center; display: grid; justify-items: center; gap: 1px;
+           padding: 9px 0; border: 1px solid var(--cizgi); border-radius: 16px; background: var(--kart);
+           color: var(--yazi); text-decoration: none; transition: transform .15s; }
+    .gun[aria-current] { background: var(--yazi); color: var(--bg); border-color: var(--yazi); transform: scale(1.08); }
+    .gun-ad, .gun-ay { font-size: 12px; opacity: .75; }
+    .gun-no { font-size: 21px; font-weight: 800; }
+
+    .saatler { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+    .saat { padding: 6px 11px; border: 1px solid var(--cizgi); border-radius: 999px; background: var(--kart);
+            color: var(--yazi); text-decoration: none; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .saat[aria-current] { background: var(--marka); color: var(--marka-yazi); border-color: var(--marka); font-weight: 700; }
+    .ozet { color: var(--soluk); margin: 0 0 6px; }
+    .ozet strong { color: var(--yazi); }
+    .filtre { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; margin: 0 0 6px; cursor: pointer; }
+    .filtre input { width: 18px; height: 18px; accent-color: var(--marka); }
+    #liste[aria-busy="true"] { opacity: .5; transition: opacity .1s; }
+
+    /* Zaman şeridi açıklaması */
+    .lejant { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--soluk); margin: 4px 0 0; padding: 0; list-style: none; }
+    .lejant li { display: inline-flex; align-items: center; gap: 6px; }
+    .lejant i { width: 14px; height: 8px; border-radius: 3px; display: inline-block; }
+
+    /* ---- Makine kartları ---- */
+    .izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(156px, 1fr)); gap: 12px; }
+    .makine { --vurgu: var(--camasir); --vurgu-acik: var(--camasir-acik);
+              position: relative; background: var(--kart); border: 1px solid var(--cizgi); border-radius: 22px;
+              padding: 12px 12px 14px; box-shadow: var(--golge); display: flex; flex-direction: column; gap: 8px; }
+    .makine.dryer { --vurgu: var(--kurutma); --vurgu-acik: var(--kurutma-acik); }
+    .kart-ust { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .no { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+    .durum { font-size: 12px; font-weight: 650; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+    .durum.uygun { background: var(--vurgu-acik); color: var(--vurgu); }
+    .durum.bos { background: var(--kart-2); color: var(--soluk); }
+    .durum.dolu { background: var(--dolu-acik); color: var(--soluk); }
+    .durum.benim { background: var(--vurgu); color: var(--marka-yazi); }
+    .durum.ariza { background: var(--arizali-acik); color: var(--arizali); }
+
+
+    /* Zaman şeridi: kartın altında günün her saati */
+    .serit { display: flex; gap: 2px; margin: 0; padding: 0; list-style: none; }
+    .serit li { flex: 1; display: flex; }
+    .hucre { flex: 1; height: 12px; border-radius: 3px; border: 0; padding: 0; display: block; }
+    .hucre.uygun { background: var(--vurgu-acik); box-shadow: inset 0 0 0 1px var(--vurgu); }
+    a.hucre.uygun, button.hucre.uygun { cursor: pointer; }
+    button.hucre.uygun:hover { background: var(--vurgu); }
+    .hucre.bos { background: var(--vurgu-acik); opacity: .55; }
+    .hucre.dolu { background: var(--dolu); opacity: .55; }
+    .hucre.benim { background: var(--vurgu); }
+    .hucre.gecmis { background: var(--cizgi); opacity: .5; }
+    .hucre.ariza { background: repeating-linear-gradient(135deg, var(--bant) 0 3px, var(--arizali-acik) 3px 6px); }
+    .hucre.secili { outline: 2px solid var(--yazi); outline-offset: 1px; }
+    .serit-saat { display: flex; justify-content: space-between; font-size: 10px; color: var(--soluk); margin-top: -4px; }
+
+    .al { display: grid; gap: 6px; margin: 2px 0 0; }
+    .al select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--cizgi); border-radius: 10px;
+                 background: var(--kart); color: var(--yazi); width: 100%; }
+    .al button { width: 100%; font-size: 14px; }
+    main.uygulama button.ikincil { background: var(--kart-2); color: var(--yazi); }
+    .not { font-size: 12px; color: var(--soluk); text-align: center; }
+    .ariza-link { font-size: 12px; color: var(--soluk); text-align: center; }
+    .ariza-isaret { font-size: 12px; color: var(--arizali); text-align: center; font-weight: 600; }
+    .js .al select { display: none; }  /* JavaScript varsa program onay panelinde seçilir */
+    main.sadece-bos .makine:not(.durum-uygun) { display: none; }
+
+    /* ---- Onay paneli: makine tipine göre renk (çamaşır sabun yeşili, kurutma mercan) ---- */
+    dialog { --vurgu: var(--camasir); --vurgu-acik: var(--camasir-acik);
+             background: var(--kart); color: var(--yazi); border: 1px solid var(--cizgi); border-top: 6px solid var(--vurgu);
+             border-radius: 20px; padding: 22px; width: min(380px, calc(100% - 32px)); box-shadow: var(--golge); }
+    dialog.dryer { --vurgu: var(--kurutma); --vurgu-acik: var(--kurutma-acik); }
+    dialog::backdrop { background: rgb(10 12 24 / .5); }
+    .onay-ust { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; }
+    .onay-ust h2 { margin: 0; font-size: 20px; }
+    .onay-ikon { flex: none; width: 50px; height: 50px; border-radius: 14px; display: grid; place-items: center;
+                 background: var(--vurgu-acik); color: var(--vurgu); }
+    .onay-ikon svg { width: 30px; height: 30px; }
+    .onay-tur { font-size: 13px; font-weight: 700; color: var(--vurgu); }
+    dialog dl { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 0 0 16px;
+                padding: 14px 0; border-block: 1.5px dashed var(--cizgi); }
+    dialog dt { color: var(--soluk); }
+    dialog dd { margin: 0; font-weight: 700; }
+    .program { border: 0; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .program[hidden] { display: none; }
+    .program small { font-weight: 500; color: var(--soluk); }
+    .program label:has(input:disabled) { opacity: .45; cursor: not-allowed; }
+    .program-not { grid-column: 1 / -1; margin: 0; font-size: 12px; color: var(--soluk); }
+    .program-not[hidden] { display: none; }  /* kurutmada program yok; display: grid gizlemeyi ezmesin */
+    .program legend { font-size: 13px; color: var(--soluk); margin-bottom: 8px; }
+    .program label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px;
+                     border: 1.5px solid var(--cizgi); border-radius: 12px; cursor: pointer; font-weight: 650; }
+    .program input { accent-color: var(--vurgu); }
+    .program label:has(input:checked) { border-color: var(--vurgu); background: var(--vurgu-acik); }
+    .dugmeler { display: flex; justify-content: flex-end; gap: 8px; }
+    main.uygulama dialog button[type="submit"] { background: var(--vurgu); padding: 10px 20px; }
+
+    @media (prefers-reduced-motion: reduce) { .gun { transition: none; } }
+</style>
+{% endblock %}
+
+{% block icerik %}
+<main class="uygulama">
+  <div class="baslik-satir"><h1>Makineler</h1></div>
+  {% if session.student_id %}
+    <p class="camasirhane">{{ camasirhane_adi }} çamaşırhanesi</p>
+  {% else %}
+    {# Giriş yapmamış ziyaretçi çamaşırhaneyi seçer; öğrenciler yalnızca kendi çamaşırhanesini görür #}
+    <form method="get" class="camasirhane">
+      <label for="camasirhane-sec">Çamaşırhane:</label>
+      <select id="camasirhane-sec" name="camasirhane" onchange="this.form.submit()">
+        {% for c in camasirhaneler %}
+          <option value="{{ c['laundry_room_id'] }}" {% if c['laundry_room_id'] == camasirhane %}selected{% endif %}>{{ c["dorm_name"] }} · {{ c["block_name"] }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button type="submit">Göster</button></noscript>
+    </form>
+  {% endif %}
+
+  {# Gün şeridi: yana kaydırınca ortaya gelen gün seçilir, liste sayfa yenilenmeden değişir.
+     JavaScript yoksa her gün normal bir bağlantı olarak çalışır. #}
+  <nav class="gunler" id="gunler" aria-label="Gün seçimi">
+    {% for g in gunler %}
+      <a class="gun" href="{{ url_for('randevu.makine', gun=g.strftime('%Y-%m-%d'), saat=saat, camasirhane=None if session.student_id else camasirhane) }}" data-gun="{{ g.strftime('%Y-%m-%d') }}"
+         {% if g == secili_gun %}aria-current="date"{% endif %}>
+        <span class="gun-ad">{{ "Bugün" if g.date() == bugun else gun_adlari[g.weekday()] }}</span>
+        <span class="gun-no">{{ g.day }}</span>
+        <span class="gun-ay">{{ ay_adlari[g.month - 1] }}</span>
+      </a>
     {% endfor %}
-  {% endwith %}
+  </nav>
 
-  {# Gün ve saat seçimi: seçilen saatte hangi makinelerin boş olduğunu gösterir #}
-  <form method="get" class="secici">
-    <input type="date" name="gun" value="{{ zaman[:10] }}" aria-label="Gün">
-    <select name="saat" aria-label="Saat">
-      {% for s in range(8, 20) %}
-        <option value="{{ s }}" {% if zaman[11:13] | int == s %}selected{% endif %}>{{ "%02d:00" % s }}</option>
-      {% endfor %}
-    </select>
-    <button type="submit">Göster</button>
-  </form>
-  <p class="alt">
-    {{ zaman }} itibarıyla ·
-    {{ makineler | selectattr("dolu", "equalto", 0) | selectattr("out_of_order", "equalto", 0) | list | length }}
-    / {{ makineler | length }} makine boş
+  {# Filtre #liste dışında: gün değişince liste yenilense de seçim korunur #}
+  <label class="filtre"><input type="checkbox" id="sadece-bos"> Sadece boş makineleri göster</label>
+
+  {# #liste: gün/saat değişince yalnızca bu bölüm yeniden yüklenir #}
+  <div id="liste" data-camasirhane="{{ '' if session.student_id else camasirhane }}">
+  {% include "_haftalik_hak.html" %}
+
+  <nav class="saatler" aria-label="Saat seçimi">
+    {% for s in saatler %}
+      <a class="saat" href="{{ url_for('randevu.makine', gun=secili_gun.strftime('%Y-%m-%d'), saat=s, camasirhane=None if session.student_id else camasirhane) }}"
+         {% if s == saat %}aria-current="time"{% endif %}>{{ "%02d:00" % s }}</a>
+    {% endfor %}
+  </nav>
+
+  <p class="ozet">
+    {{ secili_gun.day }} {{ ay_adlari[secili_gun.month - 1] }} {{ gun_adlari[secili_gun.weekday()] }}, {{ "%02d:00" % saat }}:
+    <strong>{{ simdiki.values() | select("eq", "uygun") | list | length }} / {{ makineler | length }}</strong> makine randevuya açık
   </p>
+  <ul class="lejant" aria-label="Zaman şeridi renkleri">
+    <li><i class="hucre uygun" style="--vurgu: var(--camasir); --vurgu-acik: var(--camasir-acik)"></i>boş</li>
+    <li><i class="hucre dolu"></i>dolu</li>
+    <li><i class="hucre benim" style="--vurgu: var(--camasir)"></i>senin</li>
+    <li><i class="hucre gecmis"></i>geçti</li>
+  </ul>
 
   {# Aynı yapı iki kez kullanılıyor: önce çamaşır, sonra kurutma makineleri #}
+  {% set tur_adi = {"washer": "Çamaşır", "dryer": "Kurutma"} %}
   {% for tip, baslik in [("washer", "Çamaşır makineleri"), ("dryer", "Kurutma makineleri")] %}
-    <h2>{{ baslik }}</h2>
+    <h2 id="{{ 'kurutma' if tip == 'dryer' else 'camasir' }}">{{ baslik }}</h2>
     <div class="izgara">
       {% for m in makineler if m["machine_type"] == tip %}
-        <div class="makine">
-          <div class="no">{{ m["machine_no"] }}</div>
-          {% if m["out_of_order"] %}
-            <span class="durum arizali">Arızalı</span>
-          {% elif m["dolu"] %}
-            <span class="durum dolu">Dolu</span>
-          {% else %}
-            <span class="durum bos">Boş</span>
-            {% if session.student_id %}
-              {# Randevu formu: makine ve saat gizli alanlarla /randevu adresine gönderilir #}
-              <form method="post" action="/randevu" class="al">
+        {% set hucreler = serit[m.machine_id] %}
+        {% set durum = simdiki[m.machine_id] %}
+        {% set ad = tur_adi[tip] ~ " makinesi " ~ m["machine_no"] %}
+        <article class="makine {{ tip }} durum-{{ durum }}" aria-label="{{ ad }}" data-machine-id="{{ m['machine_id'] }}">
+          <div class="kart-ust">
+            <span class="no">{{ m["machine_no"] }}</span>
+            <span class="durum {{ durum }}">
+              {{ {"uygun": "Boş", "bos": "Boş", "dolu": "Dolu", "benim": "Senin", "ariza": "Arızalı", "gecmis": "Geçti"}[durum] }}
+            </span>
+          </div>
+
+          {{ cizim(m.machine_id, tip, durum) }}
+
+          {# Zaman şeridi: boş saate dokunmak o saat için randevuyu başlatır; diğer saatler o saati seçer #}
+          <ol class="serit" aria-label="{{ ad }}, günün saatleri">
+            {% for h, d in hucreler %}
+              {% set etiket = "%02d:00 " % h ~ {"uygun": "boş", "bos": "boş ama süre sığmıyor", "dolu": "dolu", "benim": "senin randevun", "gecmis": "geçti", "ariza": "arızalı"}[d] %}
+              <li>
+                {% if d == "uygun" and session.student_id %}
+                  <button type="button" class="hucre uygun{% if h == saat %} secili{% endif %}" data-saat="{{ h }}"
+                          data-beyaz="{{ 1 if h in beyaz_olur[m.machine_id] else 0 }}"
+                          aria-label="{{ etiket }}, randevu al" title="{{ etiket }}"></button>
+                {% elif d != "gecmis" %}
+                  <a class="hucre {{ d }}{% if h == saat %} secili{% endif %} saat-sec"
+                     href="{{ url_for('randevu.makine', gun=secili_gun.strftime('%Y-%m-%d'), saat=h, camasirhane=None if session.student_id else camasirhane) }}"
+                     aria-label="{{ etiket }}, bu saati göster" title="{{ etiket }}"></a>
+                {% else %}
+                  <span class="hucre gecmis" title="{{ etiket }}"></span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ol>
+          <div class="serit-saat" aria-hidden="true"><span>{{ "%02d" % hucreler[0][0] }}</span><span>{{ "%02d" % (hucreler[-1][0] + 1) }}</span></div>
+
+          {% if session.student_id %}
+            {% if durum == "uygun" %}
+              {# JavaScript yoksa bu form doğrudan gönderilir; varsa onay paneli açılır #}
+              <form method="post" action="{{ url_for('randevu.randevu_al') }}" class="al" data-makine="{{ ad }}" data-tur="{{ tip }}"
+                    data-beyaz="{{ 1 if saat in beyaz_olur[m.machine_id] else 0 }}">
+                <input type="hidden" name="csrf" value="{{ csrf_token() }}">
                 <input type="hidden" name="machine_id" value="{{ m['machine_id'] }}">
                 <input type="hidden" name="start_time" value="{{ zaman }}">
                 {% if tip == "washer" %}
                   <select name="program" aria-label="Program">
-                    <option value="colored">Renkli</option>
-                    <option value="white">Beyaz</option>
+                    <option value="colored">Renkli ({{ sureler.colored }} saat)</option>
+                    <option value="white">Beyaz ({{ sureler.white }} saat)</option>
                   </select>
                 {% endif %}
-                <button type="submit">Randevu al</button>
+                <button type="submit" aria-label="{{ ad }}, {{ "%02d:00" % saat }} için randevu al">Randevu al</button>
               </form>
+            {% elif durum == "bos" %}
+              <div class="not">{{ "Kapanışa" if tip == "dryer" else "Süre" }} yetişmiyor</div>
+            {% elif durum == "dolu" %}
+              {# Bekleme listesi: bu saat boşalırsa bildirim gelir #}
+              <form method="post" action="{{ url_for('randevu.sira') }}" class="al">
+                <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+                <input type="hidden" name="machine_id" value="{{ m['machine_id'] }}">
+                <input type="hidden" name="start_time" value="{{ zaman }}">
+                {% if m["machine_id"] in sirada %}
+                  <input type="hidden" name="islem" value="cik">
+                  <button type="submit" class="ikincil">Sıradasın · çık</button>
+                {% else %}
+                  <button type="submit" class="ikincil">Sıraya gir</button>
+                {% endif %}
+              </form>
+            {% elif durum == "benim" %}
+              <div class="not">Bu saatte randevun var</div>
+            {% endif %}
+
+            {% if arizalar.get(m.machine_id) and not m["out_of_order"] %}
+              <div class="ariza-isaret">Arıza bildirildi · görevli inceliyor</div>
+            {% elif not m["out_of_order"] %}
+              <a class="ariza-link" href="{{ url_for('yurt.ariza_bildir', machine_id=m['machine_id']) }}">Arıza bildir</a>
             {% endif %}
           {% endif %}
-        </div>
+        </article>
       {% endfor %}
     </div>
   {% endfor %}
+  </div>
+
+  {# Randevu onay paneli: bilgiler + (çamaşırda) program seçimi; "Onayla" formu gönderir #}
+  <dialog id="onay" aria-labelledby="onay-baslik">
+    <form method="post" action="{{ url_for('randevu.randevu_al') }}" id="onay-form">
+      <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      <input type="hidden" name="machine_id">
+      <input type="hidden" name="start_time">
+      <div class="onay-ust">
+        <span class="onay-ikon" aria-hidden="true"><svg><use id="onay-sembol" href="#ikon-washer"/></svg></span>
+        <div>
+          <div class="onay-tur" id="onay-tur"></div>
+          <h2 id="onay-baslik">Randevuyu onaylıyor musun?</h2>
+        </div>
+      </div>
+      <dl id="onay-bilgi"></dl>
+      <fieldset class="program" id="program-alani">
+        <legend>Program</legend>
+        <label><input type="radio" name="program" value="colored" checked> Renkli <small>{{ sureler.colored }} saat</small></label>
+        <label><input type="radio" name="program" value="white"> Beyaz <small>{{ sureler.white }} saat</small></label>
+        <p class="program-not" id="beyaz-not" hidden>Beyaz yıkama {{ sureler.white }} saat sürer; bu saatten sonra makine dolu ya da çamaşırhane kapanıyor.</p>
+      </fieldset>
+      <div class="dugmeler">
+        <button type="button" class="ikincil" id="vazgec">Vazgeç</button>
+        <button type="submit">Onayla</button>
+      </div>
+    </form>
+  </dialog>
 </main>
-</body>
-</html>
+{% include "_yikama_popup.html" %}
+{% endblock %}
+
+{% block script %}
+<script>
+  document.documentElement.classList.add("js");
+  const onay = document.getElementById("onay");
+  const onayForm = document.getElementById("onay-form");
+  const bilgi = document.getElementById("onay-bilgi");
+  const programAlani = document.getElementById("program-alani");
+
+  // Onay panelini doldurup açar. Kart düğmesi de zaman şeridindeki boş saat de bunu kullanır.
+  // Süreler sunucudan gelir (kurallar.SURELER): kural tek yerde, burada tekrar yazılmaz
+  const SURELER = {{ sureler | tojson }};
+  const sureHesapla = (tur, program) => tur === "dryer" ? SURELER.dryer : SURELER[program];
+  const saatYaz = d => d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  let acikRandevu = null;
+
+  function bilgiYaz() {
+    const { makine, tur, startTime } = acikRandevu;
+    const program = tur === "dryer" ? null : onayForm.querySelector("input[name=program]:checked").value;
+    const sure = sureHesapla(tur, program);
+    const bas = new Date(startTime.replace(" ", "T"));
+    const bit = new Date(bas.getTime() + sure * 3600000);
+    const satirlar = [
+      ["Makine", makine],
+      ["Tarih", bas.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" })],
+      ["Saat", `${saatYaz(bas)} – ${saatYaz(bit)} (${sure} saat)`],
+    ];
+    bilgi.replaceChildren(...satirlar.flatMap(([k, v]) => {
+      const dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = k; dd.textContent = v;
+      return [dt, dd];
+    }));
+  }
+  programAlani.addEventListener("change", bilgiYaz);
+
+  function randevuBaslat({ machineId, makine, tur, startTime, program, beyazOlur }) {
+    acikRandevu = { makine, tur, startTime };
+    onayForm.machine_id.value = machineId;
+    onayForm.start_time.value = startTime;
+    // Kurutmada program yok: alan gizlenir ve gönderilmez
+    programAlani.hidden = tur === "dryer";
+    programAlani.disabled = tur === "dryer";
+    // Beyaz (2 saat) bu saate sığmıyorsa seçilemez; seçiliyse renkliye dönülür
+    const beyaz = onayForm.querySelector("input[name=program][value=white]");
+    beyaz.disabled = !beyazOlur;
+    document.getElementById("beyaz-not").hidden = beyazOlur || tur === "dryer";
+    if (program && !(program === "white" && !beyazOlur)) {
+      onayForm.querySelector(`input[name=program][value=${program}]`).checked = true;
+    } else {
+      onayForm.querySelector("input[name=program][value=colored]").checked = true;
+    }
+    bilgiYaz();
+    onay.className = tur;
+    document.getElementById("onay-sembol").setAttribute("href", "#ikon-" + tur);
+    document.getElementById("onay-tur").textContent = tur === "dryer" ? "Kurutma randevusu" : "Çamaşır randevusu";
+    onay.showModal();
+  }
+  document.getElementById("vazgec").addEventListener("click", () => onay.close());
+
+  // Liste yeniden yüklendiğinde kartlar değişir; bu yüzden olaylar belgeye bağlanır
+  document.addEventListener("submit", e => {
+    const form = e.target.closest("form.al[data-makine]");
+    if (!form) return;
+    e.preventDefault();
+    randevuBaslat({ machineId: form.machine_id.value, makine: form.dataset.makine, tur: form.dataset.tur,
+                    startTime: form.start_time.value, program: form.program?.value, beyazOlur: form.dataset.beyaz === "1" });
+  });
+
+  // ---- Gün şeridi ve saatler: sayfa yenilenmeden #liste değişir ----
+  const serit = document.getElementById("gunler");
+  const seciliGun = () => serit.querySelector("[aria-current]");
+
+  async function yukle(url) {
+    const liste = document.getElementById("liste");
+    liste.setAttribute("aria-busy", "true");
+    try {
+      const yanit = await fetch(url);
+      if (yanit.redirected) return location.assign(yanit.url);  // oturum düştüyse giriş sayfasına
+      const yeni = new DOMParser().parseFromString(await yanit.text(), "text/html");
+      liste.replaceWith(yeni.getElementById("liste"));
+      document.querySelectorAll(".mesaj").forEach(m => m.remove());  // eski uyarı yeni güne ait değil
+      history.replaceState(null, "", url);
+    } catch {
+      location.assign(url);  // ağ hatasında normal sayfa geçişi
+    }
+  }
+
+  function gunSec(gun) {
+    if (gun === seciliGun()) return;
+    seciliGun()?.removeAttribute("aria-current");
+    gun.setAttribute("aria-current", "date");
+    // Seçili saat yeni günde yoksa sunucu o günün ilk açık saatini seçer
+    const saat = document.querySelector(".saat[aria-current]")?.textContent.slice(0, 2) ?? "";
+    const camasirhane = document.getElementById("liste").dataset.camasirhane;
+    yukle(`${location.pathname}?gun=${gun.dataset.gun}&saat=${Number(saat)}` + (camasirhane ? `&camasirhane=${camasirhane}` : ""));
+  }
+
+  // Kaydırma durunca ortadaki gün seçilir
+  let kaydirmaZamanlayici;
+  serit.addEventListener("scroll", () => {
+    clearTimeout(kaydirmaZamanlayici);
+    kaydirmaZamanlayici = setTimeout(() => {
+      const orta = serit.getBoundingClientRect().left + serit.clientWidth / 2;
+      const enYakin = [...serit.children].reduce((a, b) => {
+        const uzaklik = el => Math.abs(el.getBoundingClientRect().left + el.offsetWidth / 2 - orta);
+        return uzaklik(b) < uzaklik(a) ? b : a;
+      });
+      gunSec(enYakin);
+    }, 150);
+  });
+
+  document.addEventListener("click", e => {
+    const gun = e.target.closest(".gun"), saat = e.target.closest(".saat, .saat-sec");
+    const bosHucre = e.target.closest("button.hucre.uygun");
+    if (gun) {
+      // Tıklanan gün ortaya kayar ve seçilir
+      e.preventDefault();
+      gun.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+      gunSec(gun);
+    } else if (saat) {
+      e.preventDefault();
+      yukle(saat.href);
+    } else if (bosHucre) {
+      // Zaman şeridinde boş saate dokunmak: o saat için onay paneli
+      const kart = bosHucre.closest(".makine");
+      const gunStr = seciliGun().dataset.gun;
+      const h = String(bosHucre.dataset.saat).padStart(2, "0");
+      randevuBaslat({ machineId: kart.dataset.machineId,
+                      makine: kart.getAttribute("aria-label"), tur: kart.classList.contains("dryer") ? "dryer" : "washer",
+                      startTime: `${gunStr} ${h}:00:00`, beyazOlur: bosHucre.dataset.beyaz === "1" });
+    }
+  });
+
+  seciliGun()?.scrollIntoView({ inline: "center", block: "nearest" });
+
+  // "Sadece boş" filtresi: tercih bu tarayıcıda hatırlanır (depolama kapalıysa da filtre çalışır)
+  const filtre = document.getElementById("sadece-bos");
+  const filtreUygula = () => document.querySelector("main").classList.toggle("sadece-bos", filtre.checked);
+  try { filtre.checked = localStorage.getItem("sadeceBos") === "1"; } catch {}
+  filtreUygula();
+  filtre.addEventListener("change", () => {
+    filtreUygula();
+    try { localStorage.setItem("sadeceBos", filtre.checked ? "1" : "0"); } catch {}
+  });
+</script>
+{% endblock %}

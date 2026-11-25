@@ -1,0 +1,30 @@
+{# Makine çiziminin (_makine_cizim.html) stili: ekibin ikon görselindeki ikonlar gibi dolgusuz çizgi.
+   Renkler kapsayıcının --vurgu / --vurgu-acik değişkenlerinden gelir. #}
+<style>
+    .cizim { width: 100%; max-width: 116px; height: auto; margin: 0 auto; display: block; overflow: visible;
+             fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .cizim .govde { fill: var(--kart); stroke: var(--yazi); stroke-width: 2; }
+    .cizim .cizgi { stroke: var(--yazi); stroke-width: 2; }
+    .cizim .cizgi.ince { stroke-width: 1.6; }
+    .cizim .nokta { fill: var(--yazi); }
+    .cizim .kapak { fill: var(--vurgu-acik); stroke: var(--vurgu); stroke-width: 2.6; }
+    .cizim .parilti { stroke: var(--vurgu); stroke-width: 2; opacity: .6; }
+    .cizim .su { fill: var(--vurgu); opacity: .22; }
+    .cizim .sembol { stroke: var(--vurgu); stroke-width: 2.2; }
+    .durum-dolu .cizim .sicak, .durum-benim .cizim .sicak { animation: sicak 1.4s ease-in-out infinite alternate; }
+    .cizim .giysi { stroke: var(--kart); stroke-width: .8; }
+    .cizim .g1 { fill: var(--vurgu); } .cizim .g2 { fill: var(--yazi); opacity: .7; } .cizim .g3 { fill: var(--kurutma); }
+    .dryer .cizim .g3 { fill: var(--camasir); }
+    .cizim .tambur { transform-origin: 29.8px 39.8px; animation: tambur 2.6s linear infinite; }
+    .cizim .su, .durum-dolu .cizim .dalga, .durum-benim .cizim .dalga { animation: dalga 2.6s ease-in-out infinite alternate; }
+    .cizim .bant rect { fill: var(--bant); stroke: #00000040; stroke-width: .6; }
+    /* Dolu makinede ikinci gösterge yanar */
+    .durum-dolu .cizim .led, .durum-benim .cizim .led { fill: var(--vurgu); }
+    .durum-ariza .cizim .kapak { stroke: var(--arizali); fill: var(--arizali-acik); }
+    .durum-dolu .cizim .govde, .durum-dolu .cizim .cizgi, .durum-ariza .cizim .govde, .durum-ariza .cizim .cizgi { stroke: var(--soluk); }
+    .durum-dolu .cizim .nokta:not(.led), .durum-ariza .cizim .nokta { fill: var(--soluk); }
+    @keyframes tambur { to { transform: rotate(360deg); } }
+    @keyframes dalga { to { transform: translateX(-3px) translateY(1px); } }
+    @keyframes sicak { to { transform: translateY(-1.6px); opacity: .55; } }
+    @media (prefers-reduced-motion: reduce) { .cizim .tambur, .cizim .su, .cizim .sembol { animation: none !important; } }
+</style>

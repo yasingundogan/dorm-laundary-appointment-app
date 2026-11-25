@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- DormLaundary logosu: makine kartlarındaki çizgi diliyle (ekibin sağladığı çamaşır/kurutma ikon görseli)
+       mürekkep siyahı kutuda beyaz çamaşır makinesi. Safir mavisi su = çamaşır rengi, bakır ışık = kurutma rengi. -->
+  <defs><clipPath id="kapak"><circle cx="32" cy="37" r="8.6"/></clipPath></defs>
+  <rect width="64" height="64" rx="16" fill="#14171f"/>
+  <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="15.25" stroke="#ffffff" stroke-opacity=".14" stroke-width="1.5"/>
+  <rect x="15" y="11" width="34" height="42" rx="7" stroke="#ffffff" stroke-width="3"/>
+  <path d="M15 21h34" stroke="#ffffff" stroke-width="3"/>
+  <path d="M20.5 16h5" stroke="#ffffff" stroke-width="2.6"/>
+  <circle cx="32" cy="16" r="2.2" stroke="#ffffff" stroke-width="2"/>
+  <circle cx="39" cy="16" r="1.4" fill="#ffffff"/>
+  <circle cx="43.5" cy="16" r="1.6" fill="#d08a4a"/>
+  <g clip-path="url(#kapak)">
+    <path d="M21 39.5c2.6-2.6 5.4-2.9 8.2-1s5.4 2 8 .2 4.4-1.4 6 .4V48H21Z" fill="#4f86c6"/>
+  </g>
+  <circle cx="32" cy="37" r="10" stroke="#ffffff" stroke-width="3"/>
+  <path d="M27.4 33.2a6 6 0 0 1 3.6-2.2" stroke="#ffffff" stroke-width="1.8" stroke-opacity=".7"/>
+</svg>

@@ -1,0 +1,31 @@
+{# Haftalık kalan çamaşır hakkı kutusu. Beklenen: hak = {"kalan", "toplam", "aralik"} (app.haftalik_hak) #}
+{% if hak %}
+<div class="hak {{ 'bitti' if hak.kalan == 0 }}">
+  <span class="hak-ikon" aria-hidden="true"><svg><use href="#ikon-washer"/></svg></span>
+  <div>
+    <div class="hak-baslik">Haftalık çamaşır hakkı: <strong>{{ hak.kalan }} / {{ hak.toplam }}</strong> kaldı</div>
+    <div class="hak-alt">
+      {{ hak.aralik }} haftası
+      {%- if hak.kalan == 0 %} · Bu hafta yeni çamaşır randevusu alamazsın. Kurutma sınırsız.{% endif %}
+    </div>
+  </div>
+  <span class="hak-noktalar" aria-hidden="true">
+    {% for i in range(hak.toplam) %}<span class="{{ 'dolu' if i < hak.kalan }}"></span>{% endfor %}
+  </span>
+</div>
+<style>
+  .hak { display: flex; align-items: center; gap: 12px; background: var(--camasir-acik); color: var(--yazi);
+         border-radius: 10px; padding: 10px 12px; margin: 0 0 18px; }
+  .hak.bitti { background: var(--arizali-acik); }
+  .hak-ikon { flex: none; color: var(--camasir); display: grid; }
+  .hak.bitti .hak-ikon { color: var(--arizali); }
+  .hak-ikon svg { width: 26px; height: 26px; }
+  .hak > div { flex: 1; min-width: 0; }
+  .hak-baslik { font-size: 14px; }
+  .hak-alt { font-size: 12px; color: var(--soluk); margin-top: 2px; }
+  .hak-noktalar { display: flex; gap: 4px; flex: none; }
+  .hak-noktalar span { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--camasir); }
+  .hak-noktalar span.dolu { background: var(--camasir); }
+  .hak.bitti .hak-noktalar span { border-color: var(--arizali); }
+</style>
+{% endif %}

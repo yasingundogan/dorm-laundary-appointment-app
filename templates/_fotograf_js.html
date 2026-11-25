@@ -1,0 +1,29 @@
+{# Giriş/kayıt formlarının ortak davranışı. Sayfanın kendi kontrolleri (ör. şifre eşleşmesi) bundan ÖNCE eklenmeli:
+   gönderimi durduran bir kontrol varsa düğme kilitlenmez. #}
+<script>
+  for (const kutu of document.querySelectorAll(".sifre")) {
+    const alan = kutu.querySelector("input"), dugme = kutu.querySelector(".goster");
+    const caps = document.getElementById(alan.getAttribute("aria-describedby"));
+    dugme.addEventListener("click", () => {
+      const acik = alan.type === "password";
+      alan.type = acik ? "text" : "password";
+      dugme.setAttribute("aria-pressed", String(acik));
+      dugme.setAttribute("aria-label", acik ? "Şifreyi gizle" : "Şifreyi göster");
+      alan.focus();
+    });
+    // Caps Lock açıkken şifre yanlış yazılmasın
+    for (const olay of ["keydown", "keyup"]) {
+      alan.addEventListener(olay, e => { caps.hidden = !e.getModifierState?.("CapsLock"); });
+    }
+  }
+
+  // Gönderilirken düğme kilitlenir: çift tıklama iki istek göndermez
+  for (const form of document.querySelectorAll("form[data-gonderiliyor]")) {
+    form.addEventListener("submit", e => {
+      if (e.defaultPrevented) return;
+      const dugme = form.querySelector("button[type=submit]");
+      dugme.disabled = true;
+      dugme.textContent = form.dataset.gonderiliyor;
+    });
+  }
+</script>
