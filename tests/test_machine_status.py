@@ -24,18 +24,18 @@ def setup_machines_and_appointments(conn):
         "INSERT INTO machines (machine_no, machine_type, out_of_order) VALUES (2, 'washer', 1)"
     )
 
-    # Active appointments at 14:00:00 (duration is computed in SQL: +1h for washer, +2h for dryer)
+    # Active appointments at 14:00:00 (end_time is stored: +1h for colored washer, +2h for dryer)
     cur.execute(
         """
-        INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-        VALUES (?, ?, '2026-11-18 14:00:00', 'colored', 'active')
+        INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+        VALUES (?, ?, '2026-11-18 14:00:00', '2026-11-18 15:00:00', 'colored', 'active')
         """,
         (s_id, w_id),
     )
     cur.execute(
         """
-        INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-        VALUES (?, ?, '2026-11-18 14:00:00', NULL, 'active')
+        INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+        VALUES (?, ?, '2026-11-18 14:00:00', '2026-11-18 16:00:00', NULL, 'active')
         """,
         (s_id, d_id),
     )

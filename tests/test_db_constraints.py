@@ -23,23 +23,23 @@ def test_g_database_constraints(test_db):
     with pytest.raises(sqlite3.IntegrityError):
         test_db.execute(
             """
-            INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-            VALUES (1, 1, '2026-12-01 10:00:00', 'mixed', 'active')
+            INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+            VALUES (1, 1, '2026-12-01 10:00:00', '2026-12-01 11:00:00', 'mixed', 'active')
             """
         )
 
     # Duplicate active appointment on same machine and start_time must raise IntegrityError
     test_db.execute(
         """
-        INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-        VALUES (1, 1, '2026-12-01 10:00:00', 'colored', 'active')
+        INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+        VALUES (1, 1, '2026-12-01 10:00:00', '2026-12-01 11:00:00', 'colored', 'active')
         """
     )
     with pytest.raises(sqlite3.IntegrityError):
         test_db.execute(
             """
-            INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-            VALUES (1, 1, '2026-12-01 10:00:00', 'white', 'active')
+            INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+            VALUES (1, 1, '2026-12-01 10:00:00', '2026-12-01 12:00:00', 'white', 'active')
             """
         )
 
@@ -47,8 +47,8 @@ def test_g_database_constraints(test_db):
     test_db.execute("UPDATE appointments SET status = 'cancelled'")
     test_db.execute(
         """
-        INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-        VALUES (1, 1, '2026-12-01 10:00:00', 'white', 'active')
+        INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+        VALUES (1, 1, '2026-12-01 10:00:00', '2026-12-01 12:00:00', 'white', 'active')
         """
     )
     assert test_db.execute("SELECT COUNT(*) FROM appointments").fetchone()[0] == 2
