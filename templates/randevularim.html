@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Randevularım · Yurt Çamaşırhanesi</title>
+  <style>
+    :root { --bg: #f3f5f8; --kart: #ffffff; --yazi: #18202e; --soluk: #5b6578; --cizgi: #d9dee7;
+            --arizali: #b3261e; --arizali-acik: #fbe9e7; --calisiyor: #2e7d5b; --calisiyor-acik: #e2f1ea; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--yazi);
+           font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 26px; margin: 0 0 20px; }
+    h2 { font-size: 18px; margin: 28px 0 10px; }
+    .ust { display: flex; justify-content: flex-end; align-items: center; gap: 14px; font-size: 14px;
+           color: var(--soluk); margin-bottom: 16px; }
+    .ust a { color: var(--yazi); font-weight: 600; }
+    .mesaj { padding: 10px 12px; border-radius: 8px; margin: 0 0 16px; font-size: 14px; }
+    .mesaj.basarili { background: var(--calisiyor-acik); color: var(--calisiyor); }
+    .mesaj.hata { background: var(--arizali-acik); color: var(--arizali); }
+    .liste { display: grid; gap: 8px; }
+    .randevu { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 8px; padding: 12px 14px;
+               display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .randevu .zaman { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .randevu .detay { color: var(--soluk); font-size: 14px; }
+    .etiket { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--bg); color: var(--soluk); }
+    .etiket.gec { background: #fdf0d5; color: #8a5a00; }
+    button { font: inherit; font-size: 13px; padding: 6px 12px; border: 1px solid var(--arizali); border-radius: 6px;
+             background: var(--kart); color: var(--arizali); cursor: pointer; }
+    .bos { color: var(--soluk); }
+  </style>
+</head>
+<body>
+<main>
+  <nav class="ust">
+    <a href="{{ url_for('makine') }}">Makineler</a>
+    <span>Merhaba, <strong>{{ session.student_name }}</strong></span>
+    <a href="{{ url_for('cikis') }}">Çıkış</a>
+  </nav>
+  <h1>Randevularım</h1>
+
+  {% with mesajlar = get_flashed_messages(with_categories=true) %}
+    {% for tur, mesaj in mesajlar %}
+      <div class="mesaj {{ tur }}">{{ mesaj }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% set tip_adi = {"washer": "Çamaşır", "dryer": "Kurutma"} %}
+  {% set program_adi = {"colored": "renkli", "white": "beyaz"} %}
+  {# Yaklaşan: aktif ve başlangıcı henüz gelmemiş; geri kalan her şey geçmiş sayılır #}
+  {% set yaklasan = randevular | selectattr("status", "equalto", "active") | selectattr("start_time", "gt", simdi) | list %}
+
+  <h2>Yaklaşan</h2>
+  <div class="liste">
+    {% for r in yaklasan | reverse %}
+      <div class="randevu">
+        <div>
+          <div class="zaman">{{ r["start_time"][:16] }}</div>
+          <div class="detay">
+            {{ tip_adi[r["machine_type"]] }} makinesi {{ r["machine_no"] }}
+            {% if r["program"] %} · {{ program_adi[r["program"]] }}{% endif %}
+          </div>
+        </div>
+        <form method="post" action="/randevu/{{ r['appointment_id'] }}/iptal">
+          <button type="submit">İptal et</button>
+        </form>
+      </div>
+    {% else %}
+      <p class="bos">Yaklaşan randevun yok. <a href="{{ url_for('makine') }}">Makinelere göz at.</a></p>
+    {% endfor %}
+  </div>
+
+  <h2>Geçmiş ve iptal edilenler</h2>
+  <div class="liste">
+    {% for r in randevular if r not in yaklasan %}
+      <div class="randevu">
+        <div>
+          <div class="zaman">{{ r["start_time"][:16] }}</div>
+          <div class="detay">
+            {{ tip_adi[r["machine_type"]] }} makinesi {{ r["machine_no"] }}
+            {% if r["program"] %} · {{ program_adi[r["program"]] }}{% endif %}
+          </div>
+        </div>
+        {% if r["status"] == "cancelled" %}
+          {% if "son_dakika" in r.keys() and r["son_dakika"] %}
+            <span class="etiket gec">Son dakika iptali</span>
+          {% else %}
+            <span class="etiket">İptal edildi</span>
+          {% endif %}
+        {% elif r["status"] == "completed" %}
+          <span class="etiket">Tamamlandı</span>
+        {% elif r["status"] == "no_show" %}
+          <span class="etiket gec">Gelinmedi</span>
+        {% else %}
+          <span class="etiket">Geçti</span>
+        {% endif %}
+      </div>
+    {% else %}
+      <p class="bos">Henüz geçmiş randevun yok.</p>
+    {% endfor %}
+  </div>
+</main>
+</body>
+</html>

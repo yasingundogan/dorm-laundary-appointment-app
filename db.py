@@ -1,9 +1,11 @@
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
+DB_PATH =os.environ.get("DB_PATH" , "camasirhane.db")
 
 def baglanti_al():
-    conn = sqlite3.connect("camasirhane.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
     conn.row_factory = sqlite3.Row
     return conn
@@ -121,7 +123,7 @@ def makine_getir(machine_id):
         (machine_id, )
     ).fetchone()
     conn.close()
-    return makine
+    return makine 
 
 def randevu_ekle(student_id, machine_id, start_time, program):
     
@@ -136,11 +138,52 @@ def randevu_ekle(student_id, machine_id, start_time, program):
     finally:
         conn.close()
 
+def ogrenci_randevulari(student_id):
+    conn = baglanti_al()
+    try:
+        return conn.execute("""
+            select a.appointment_id, a.start_time, m.machine_no, m.machine_type,
+                   a.program, a.status, a.cancelled_at,
+                   a.cancelled_at > datetime(a.start_time, '-15 minutes') as son_dakika
+            from appointments a
+            join machines m on a.machine_id = m.machine_id
+            where student_id = ?
+            order by a.start_time desc
+        """, (student_id,)).fetchall()
+    finally:
+        conn.close()
+
+
+def randevu_getir(appointment_id):
+    conn = baglanti_al()
+    try:
+        return conn.execute(
+            "select * from appointments where appointment_id = ?",
+            (appointment_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+
+
+def randevu_iptal_et(appointment_id):
+    conn = baglanti_al()
+    try:
+        cursor = conn.execute("""
+            update appointments
+            set status = 'cancelled',
+                cancelled_at = datetime('now', 'localtime')
+            where appointment_id = ?
+              and status = 'active'
+        """, (appointment_id,))
+        conn.commit()
+        return cursor.rowcount
+    finally:
+        conn.close()
+
+
 
 if __name__ == "__main__":
-    print(makine_musait_mi(3, "2026-10-07 14:00:00", "2026-10-07 15:00:00"))  # aynı saat
-    print(makine_musait_mi(3, "2026-10-07 15:00:00", "2026-10-07 16:00:00"))  # hemen sonrası
-    print(makine_musait_mi(3, "2026-10-07 13:00:00", "2026-10-07 14:00:00"))  # hemen öncesi
-    print(makine_musait_mi(3, "2026-10-07 13:00:00", "2026-10-07 15:00:00"))  # yarısı çakışıyor
-    print(ogrenci_musait_mi(3, "2026-10-08 10:00:00", "2026-10-08 11:00:00")) # öğrenci 3'ün o saatte randevusu var
-    print(ogrenci_musait_mi(3, "2026-10-08 12:00:00", "2026-10-08 13:00:00")) # yok
+    print(dict(randevu_getir(5)))
+    print("İlk iptal:", randevu_iptal_et(5))     # tahmin: 1 mi 0 mı?
+    print("İkinci iptal:", randevu_iptal_et(5))  # tahmin?
+    print(dict(randevu_getir(5)))

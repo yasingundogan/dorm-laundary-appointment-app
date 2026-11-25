@@ -40,6 +40,7 @@
 <main>
   <nav class="ust">
     {% if session.student_id %}
+      <a href="/randevularim">Randevularım</a>
       <span>Merhaba, <strong>{{ session.student_name }}</strong></span>
       <a href="{{ url_for('cikis') }}">Çıkış</a>
     {% else %}

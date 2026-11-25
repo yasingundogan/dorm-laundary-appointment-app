@@ -167,6 +167,46 @@ def randevu_al():
     flash("Randevun alındı.", "basarili")
     return redirect(url_for("makine", zaman=start_time))
 
+@app.route("/randevularim")
+def randevularim():
+    if not session.get("student_id"):
+        return redirect(url_for("giris"))
+    randevular = db.ogrenci_randevulari(session["student_id"])
+    simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return render_template("randevularim.html", randevular=randevular, simdi=simdi)
+
+@app.route("/randevu/<int:appointment_id>/iptal", methods=["POST"])
+def randevu_iptal(appointment_id):
+    if not session.get("student_id"):
+        return redirect(url_for("giris"))
+
+    def hata(mesaj):
+        flash(mesaj, "hata")
+        return redirect(url_for("randevularim"))
+
+    randevu = db.randevu_getir(appointment_id)
+
+    # a) Randevu var mı?
+    
+    if randevu is None:
+        return hata("Randevu bulunamadı.")
+    # b) Bu randevu bu öğrencinin mi?        ← yetkilendirme
+    if randevu["student_id"] != session["student_id"]:
+            return hata("Randevu bulunamadı.")
+        
+    # c) Randevu hâlâ aktif mi?
+    if not randevu["status"] == "active":
+        return hata("Bu randevu zaten iptal edilmiş ya da tamamlanmış.")
+    
+    # d) Randevu başlamış ya da geçmiş mi?   (geçmiş randevu iptal edilemez)
+    simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if randevu["start_time"] <= simdi:
+        return hata("Bu randevu geçmiş veya çoktan başlamış.")
+
+    db.randevu_iptal_et(appointment_id)
+    flash("Randevun iptal edildi.", "basarili")
+    return redirect(url_for("randevularim"))
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
