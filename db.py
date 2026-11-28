@@ -180,7 +180,8 @@ def ogrenci_randevulari(student_id):
     conn = baglanti_al()
     try:
         return conn.execute(f"""
-            select a.appointment_id, a.start_time, a.end_time, a.program, a.status,
+            select a.appointment_id, a.start_time, a.end_time, a.program, a.status, a.cancelled_at,
+                   a.cancelled_at > datetime(a.start_time, '-15 minutes') as son_dakika,  -- başlangıca 15 dk kala ya da sonra iptal
                    m.machine_no, m.machine_type
             from appointments a
             join machines m on a.machine_id = m.machine_id

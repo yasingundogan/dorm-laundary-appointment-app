@@ -21,6 +21,7 @@
     .rozet { flex: none; font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--soluk); }
     .rozet.sayac { background: var(--calisiyor-acik); color: var(--calisiyor); font-weight: 600; font-variant-numeric: tabular-nums; }
     .rozet.cancelled, .rozet.no_show { background: var(--arizali-acik); color: var(--arizali); }
+    .rozet.son-dakika { background: var(--kurutma-acik); color: var(--kurutma); font-weight: 600; }
     .gecmis li { opacity: .75; }
     .profil > div { flex: 1; min-width: 0; }
     .duzenle { flex: none; font-size: 14px; font-weight: 600; color: var(--marka); }
@@ -80,8 +81,12 @@
       {% if sayac %}
         <span class="rozet sayac" data-baslangic="{{ r['start_time'] }}" data-bitis="{{ r['end_time'] }}"></span>
       {% else %}
-        {% set durumlar = {"cancelled": "İptal edildi", "no_show": "Gelinmedi"} %}
-        <span class="rozet {{ r['status'] }}">{{ durumlar.get(r["status"], "Tamamlandı") }}</span>
+        {% if r["son_dakika"] %}
+          <span class="rozet son-dakika">Son dakika iptali</span>
+        {% else %}
+          {% set durumlar = {"cancelled": "İptal edildi", "no_show": "Gelinmedi"} %}
+          <span class="rozet {{ r['status'] }}">{{ durumlar.get(r["status"], "Tamamlandı") }}</span>
+        {% endif %}
       {% endif %}
     </li>
   {% endmacro %}

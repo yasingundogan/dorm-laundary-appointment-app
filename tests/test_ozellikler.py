@@ -241,3 +241,17 @@ def test_durum_penceresi_profilde_de_gorunur(ortam):
     randevu_ekle(ortam["db"], ortam["a"], ortam["washer"], _gun(11, 30), "white")
     html = ortam["client"].get("/profil").get_data(as_text=True)
     assert 'id="yikama"' in html and 'data-kalan="1800"' in html
+
+
+# ---- Son dakika iptali etiketi (profil) ----
+def test_profilde_son_dakika_iptali_etiketi(ortam):
+    db = ortam["db"]
+    gec = randevu_ekle(db, ortam["a"], ortam["dryer"], yarin(10))
+    erken = randevu_ekle(db, ortam["a"], ortam["washer"], yarin(14), "colored")
+    db.execute("UPDATE appointments SET status = 'cancelled', cancelled_at = ? WHERE appointment_id = ?",
+               (ts(yarin(10) - timedelta(minutes=10)), gec))
+    db.execute("UPDATE appointments SET status = 'cancelled', cancelled_at = ? WHERE appointment_id = ?",
+               (ts(yarin(14) - timedelta(hours=3)), erken))
+    db.commit()
+    html = ortam["client"].get("/profil").get_data(as_text=True)
+    assert html.count("Son dakika iptali") == 1 and html.count("İptal edildi") == 1
