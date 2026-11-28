@@ -1,0 +1,40 @@
+{# Çamaşır ve kurutma sembolleri: bir kez tanımlanıp <use href="#ikon-washer|dryer"> ile kullanılır #}
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  {# ekibin sağladığı çamaşır/kurutma ikon görselindeki çizimlerin SVG karşılığı (aynı oranlar):
+     gövde, üst panel, gösterge çubuğu, düğme ve iki nokta; çamaşırda dalga + kapak kolu, kurutmada sıcak hava + havalandırma.
+     SVG olduğu için temanın rengini alır (currentColor) ve karanlık temada da görünür. #}
+  <symbol id="ikon-washer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="2" width="18" height="20" rx="2.9"/>
+    <path d="M3 7.3h18"/>
+    <path d="M5.7 4.9h3"/>
+    <circle cx="12" cy="4.9" r="1.35"/>
+    <circle cx="16.1" cy="4.9" r=".4" fill="currentColor" stroke="none"/><circle cx="17.9" cy="4.9" r=".4" fill="currentColor" stroke="none"/>
+    <circle cx="11.9" cy="14.1" r="5.5"/>
+    <path d="M7.1 15.8c1.4-1.5 3-1.7 4.6-.7s3 1.1 4.3.2l.7-.3"/>
+    <path d="M17.4 12.2h.9a.6.6 0 0 1 .6.6v2.6a.6.6 0 0 1-.6.6h-.9"/>
+  </symbol>
+  <symbol id="ikon-dryer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="2" width="18" height="20" rx="2.9"/>
+    <path d="M3 7.3h18"/>
+    <path d="M5.7 4.9h3"/>
+    <circle cx="12" cy="4.9" r="1.35"/>
+    <circle cx="16.1" cy="4.9" r=".4" fill="currentColor" stroke="none"/><circle cx="17.9" cy="4.9" r=".4" fill="currentColor" stroke="none"/>
+    <circle cx="11.9" cy="14.1" r="5.5"/>
+    <path d="M9.9 11.8c.8.9.8 1.6 0 2.5s-.8 1.6 0 2.5M11.9 11.8c.8.9.8 1.6 0 2.5s-.8 1.6 0 2.5M13.9 11.8c.8.9.8 1.6 0 2.5s-.8 1.6 0 2.5"/>
+    <path d="M17.6 18.2h1.7M17.6 19.1h1.7M17.6 20h1.7" stroke-width="1"/>
+  </symbol>
+  <symbol id="ikon-zil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
+  </symbol>
+  <symbol id="ikon-corap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 2.5h7v9.2l2.9 2.7a3.3 3.3 0 0 1-4.5 4.9l-5.1-4.7A3.2 3.2 0 0 1 9 12.3V2.5Z"/><path d="M9 6h7"/><path d="M12.2 15.6l2.4 2.2"/>
+  </symbol>
+  {# Anonim profil görseli: herkes için aynı siluet #}
+  <symbol id="avatar" viewBox="0 0 40 40">
+    <circle cx="20" cy="15.5" r="7" fill="currentColor"/>
+    <path d="M6.5 38c1.4-8.2 7-12.3 13.5-12.3S32.1 29.8 33.5 38Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="ikon-tamam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5 12.5l4.5 4.5L19 7.5"/>
+  </symbol>
+</svg>

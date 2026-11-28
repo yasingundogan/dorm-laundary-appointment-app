@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block baslik %}Bilgilerimi Düzenle{% endblock %}
+
+{% block stil %}
+{% include "_sayfa_stil.html" %}
+<style>
+    form.kart { grid-template-columns: 1fr 1fr; margin-top: 16px; }
+    .alan.tam, .dugmeler, form.kart > .mesaj { grid-column: 1 / -1; }
+    @media (max-width: 480px) { form.kart { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block icerik %}
+{% set f = form or {} %}
+<main class="uygulama">
+  <a href="{{ url_for('profil.profil') }}" class="geri"><span aria-hidden="true">←</span> Profilim</a>
+  <h1>Bilgilerimi düzenle</h1>
+  <form method="post" class="kart">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    {% if hata %}<div class="mesaj hata alan tam" role="alert">{{ hata }}</div>{% endif %}
+    <div class="alan"><label for="ad">Ad</label>
+      <input id="ad" name="first_name" autocomplete="given-name" required value="{{ f.get('first_name', ogrenci['student_name']) }}"></div>
+    <div class="alan"><label for="soyad">Soyad</label>
+      <input id="soyad" name="last_name" autocomplete="family-name" required value="{{ f.get('last_name', ogrenci['student_surname']) }}"></div>
+    <div class="alan"><label for="telefon">Telefon</label>
+      <input id="telefon" name="phone" type="tel" autocomplete="tel" required value="{{ f.get('phone', ogrenci['student_phone_no']) }}"></div>
+    {% if camasirhaneler|length > 1 %}
+    <div class="alan tam"><label for="camasirhane">Yurt ve blok</label>
+      <select id="camasirhane" name="laundry_room_id" aria-describedby="camasirhane-ipucu">
+        {% set secili = (f.get('laundry_room_id') or ogrenci['laundry_room_id']) | string %}
+        {% for c in camasirhaneler %}
+          <option value="{{ c['laundry_room_id'] }}" {% if c['laundry_room_id'] | string == secili %}selected{% endif %}>{{ c["dorm_name"] }} · {{ c["block_name"] }}</option>
+        {% endfor %}
+      </select>
+      <span class="ipucu" id="camasirhane-ipucu">Blok değiştirdiysen güncelle: makineler sayfasında yeni bloğunun çamaşırhanesini görürsün.</span></div>
+    {% endif %}
+    <div class="alan"><label for="oda">Oda numarası</label>
+      <input id="oda" name="room" required value="{{ f.get('room', ogrenci['room_no']) }}"></div>
+    <div class="alan tam"><label for="eposta">E-posta</label>
+      <input id="eposta" value="{{ ogrenci['student_mail'] }}" readonly aria-describedby="eposta-ipucu">
+      <span class="ipucu" id="eposta-ipucu">E-posta giriş adın olduğu için değiştirilemez.</span></div>
+    <div class="dugmeler">
+      <a href="{{ url_for('profil.profil') }}" class="vazgec">Vazgeç</a>
+      <button type="submit">Kaydet</button>
+    </div>
+  </form>
+</main>
+{% endblock %}

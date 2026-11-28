@@ -1,0 +1,16 @@
+{# Giriş/kayıt formlarında ortak alanlar #}
+
+{# Şifre alanı: göster/gizle düğmesi ve Caps Lock uyarısı (_fotograf_js.html çalıştırır) #}
+{% macro sifre_alani(id, ad, etiket, otomatik, ipucu="", odak=False) %}
+<div class="alan">
+  <label for="{{ id }}">{{ etiket }}</label>
+  <div class="sifre">
+    <input id="{{ id }}" name="{{ ad }}" type="password" autocomplete="{{ otomatik }}" required
+           {% if ipucu %}placeholder="{{ ipucu }}"{% endif %} {% if odak %}autofocus{% endif %} aria-describedby="{{ id }}-caps">
+    <button type="button" class="goster" aria-label="Şifreyi göster" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+    </button>
+  </div>
+  <span class="uyari" id="{{ id }}-caps" hidden>Caps Lock açık</span>
+</div>
+{% endmacro %}

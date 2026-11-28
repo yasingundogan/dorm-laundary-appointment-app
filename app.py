@@ -1,212 +1,68 @@
-from flask import Flask, render_template, request, redirect, url_for 
-from flask import session, flash
-from datetime import datetime, timedelta
-import db
-import sqlite3
+"""Uygulama kurulumu: ayarlar, güvenlik (CSRF), her sayfada ortak işler ve Blueprint'lerin kaydı.
+
+Katmanlar:
+  zaman.py     tek zaman kaynağı (Europe/Istanbul)
+  kurallar.py  saf iş kuralları (süre, çalışma saatleri, hak, doğrulama)
+  servis.py    iş akışları (kurallar + veritabanı + kilitli işlem)
+  db.py        SQL sorguları
+  web/         sayfalar (Blueprint'ler): auth, randevu, profil, bildirim, yurt
+"""
+import hmac
 import os
+import secrets
+
+from flask import Flask, abort, request, session
+
+import db
+from web import auth, bildirim, profil, randevu, yurt
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-only-change-me")
+# Ortam değişkeni yoksa her açılışta rastgele anahtar üretilir (sunucu yeniden başlayınca oturumlar kapanır).
+# Yayında SECRET_KEY mutlaka sabit ve gizli bir değerle verilmeli.
+app.secret_key = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+# Arıza fotoğrafları: static dışında, rastgele adlarla saklanır (adı tahmin edilip açılamasın)
+app.config["UPLOAD_DIR"] = os.environ.get("UPLOAD_DIR", "uploads")
+app.config["MAX_CONTENT_LENGTH"] = 6 * 1024 * 1024  # istek sınırı; fotoğraf en fazla 5 MB
+# Deneme modu (ör. /makineler?demo=washer): yalnızca geliştirmede. Yayında FLASK_DEBUG/DEMO verilmez, kapalı kalır.
+app.config["DEMO_ACIK"] = os.environ.get("FLASK_DEBUG") == "1" or os.environ.get("DEMO") == "1"
+
+for blueprint in (auth.bp, randevu.bp, profil.bp, bildirim.bp, yurt.bp):
+    app.register_blueprint(blueprint)
 
 
-@app.route("/")
-def ana_sayfa():
-    return redirect(url_for("giris"))
+# ---- CSRF koruması: her POST formu oturumdaki gizli anahtarı geri göndermek zorunda ----
+@app.before_request
+def csrf_kontrol():
+    if request.method == "POST" and app.config.get("CSRF_ACIK", True):
+        beklenen = session.get("csrf")
+        if not beklenen or not hmac.compare_digest(beklenen, request.form.get("csrf", "")):
+            abort(400, "Form süresi doldu, sayfayı yenileyip tekrar deneyin.")
 
 
-@app.route("/giris", methods=["GET", "POST"])
-def giris():
-    if request.method == "GET":
-        return render_template("giris.html")
-
-    form = request.form
-    ogrenci = db.ogrenci_dogrula(form.get("email"), form.get("password"))
-
-    if ogrenci is None:
-        return render_template("giris.html", hata="Giriş bilgileri hatalı.", form=form)
-
-    session.clear()
-    session["student_id"] = ogrenci["student_id"]
-    session["student_name"] = ogrenci["student_name"]
-    return redirect(url_for("makine"))
-
-@app.route("/cikis", methods=["GET", "POST"])
-def cikis():
-    session.clear()
-    return redirect(url_for("giris"))
+@app.context_processor
+def csrf_alani():
+    def csrf_token():
+        if "csrf" not in session:
+            session["csrf"] = secrets.token_urlsafe(32)
+        return session["csrf"]
+    return {"csrf_token": csrf_token}
 
 
-@app.route("/kayit", methods=["GET", "POST"])
-def kayit():
-    if request.method == "GET":
-        return render_template("kayit.html")
+# ---- Bildirimler: her sayfada zamanı gelen hatırlatmalar üretilir, üst çubukta okunmamış sayısı gösterilir ----
+# shortcut: bildirimler sayfa açılınca üretilir; push/e-posta bildirimine geçince zamanlanmış göreve taşınmalı
+@app.before_request
+def bildirim_uret():
+    if request.method == "GET" and session.get("student_id") and request.endpoint != "static":
+        db.bildirimleri_uret(session["student_id"])
 
-    form = request.form
-    sifre = form.get("password", "")
-    sifre_tekrar = form.get("confirm_password")
-    kontrol = ["first_name" , "last_name" , "phone" , "email" , "room" ]
 
-    # 1. Sunucu tarafı kontroller
-    for i in kontrol:
-        if not form.get(i ,"").strip():
-            return render_template("kayit.html" , hata="Boş alan bırakılamaz." , form=form)
-    
-    if sifre != sifre_tekrar :
-        return render_template("kayit.html", hata="Şifreler eşleşmiyor.", form=form)
-    if len(sifre) < 8:
-        return render_template("kayit.html", hata="Şifre 8 karakterden az olamaz.", form=form)
-
-    # 2. Kaydetmeyi dene
-    try:
-        db.ogrenci_ekle(
-            form.get("first_name"),
-            form.get("last_name"),        # soyad
-            form.get("phone"),        # telefon
-            form.get("email"),        # email
-            form.get("room"),        # oda
-            sifre,
-        )
-    except sqlite3.IntegrityError:
-        return render_template("kayit.html", hata="Bu e-posta veya telefon numarası zaten kayıtlı ", form=form)
-
-    # 3. Başarılı: giriş sayfasına yönlendir
-    return redirect(url_for("giris"))
-
-@app.route("/makineler")
-def makine():
-    zaman = request.args.get("zaman")
-
-    # Saat seçiciden gelen gün + saat, tam saatlik bir başlangıç zamanına çevrilir
-    gun = request.args.get("gun")
-    saat = request.args.get("saat")
-    if gun and saat and saat.isdigit():
-        zaman = f"{gun} {int(saat):02d}:00:00"
-
-    # Seçim yoksa bir sonraki tam saat gösterilir (randevular tam saatte başlar)
-    if zaman is None:
-        sonraki_saat = datetime.now().replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
-        zaman = sonraki_saat.strftime("%Y-%m-%d %H:%M:%S")
-
-    makineler = db.makine_durumlari(zaman)
-    return render_template("makineler.html", makineler=makineler, zaman=zaman)
-
-@app.route("/randevu", methods=["POST"])
-def randevu_al():
-    # Giriş yapmamışsa giriş sayfasına
+@app.context_processor
+def bildirim_sayisi():
     if not session.get("student_id"):
-        return redirect(url_for("giris"))
-    student_id = session["student_id"]
-
-    # Formdan gelen bilgiler
-    machine_id = request.form.get("machine_id", type=int)
-    start_time = request.form.get("start_time", "")
-    program = request.form.get("program")
-
-    # Hata olursa mesajla aynı saatin sayfasına dön
-    def hata(mesaj):
-        flash(mesaj, "hata")
-        return redirect(url_for("makine", zaman=start_time))
-
-    makine = db.makine_getir(machine_id)
-    if makine is None:
-        return hata("Makine bulunamadı.")
-
-    try:
-        baslangic = datetime.strptime(start_time, "%Y-%m-%d %H:%M:%S")
-    except ValueError:
-        return hata("Geçersiz saat.")
-    sure = 2 if makine["machine_type"] == "dryer" else 1
-    bitis = baslangic + timedelta(hours=sure)
-
-    # ---- KURALLAR (her biri: if ...: return hata("...")) ----
-
-    # a) Geçmiş bir saat olamaz
-    if baslangic < datetime.now():
-        return hata("Geçmiş bir saate randevu alınamaz.")
-
-    # b) Çalışma saatleri içinde olmalı
-    #    Hafta içi 08:00-20:00, hafta sonu 09:00-17:00. Randevu kapanıştan önce bitmeli.
-    hafta_sonu = baslangic.weekday() >= 5          # 5 = cumartesi, 6 = pazar
-    acilis = 9 if hafta_sonu else 8
-    kapanis = 17 if hafta_sonu else 20
-    if baslangic.hour < acilis or bitis > baslangic.replace(hour=kapanis):
-        return hata(f"Çamaşırhane bu gün {acilis:02d}:00-{kapanis:02d}:00 arası açık.")
-
-    # c) Makine arızalı olamaz
-    if makine["out_of_order"]:
-        return hata("Bu makine arızalı.")
-
-    # d) Program: çamaşırda zorunlu, kurutmada yok
-    if makine["machine_type"] == "dryer":
-        program = None
-    else:
-        if program not in ("colored", "white"):
-            return hata("Çamaşır makinesi için bir program seçmelisin.")
-        
-        # e) Haftalık çamaşır hakkı (en fazla 2)
-        kontrol = db.haftalik_camasir_sayisi(student_id, start_time)
-        if kontrol >= 2 :
-            return hata("Bu hafta 2 çamaşır hakkını kullandın.")
-    
-    # f) Makine bu aralıkta müsait olmalı
-    bas = baslangic.strftime("%Y-%m-%d %H:%M:%S")
-    bit = bitis.strftime("%Y-%m-%d %H:%M:%S")
-    if not db.makine_musait_mi(machine_id, bas, bit):
-        return hata("Bu makine o saatte dolu.")
-    
-    # g) Öğrencinin bu aralıkta başka randevusu olmamalı
-    ogrenci = db.ogrenci_musait_mi(student_id, bas ,bit)
-    if not ogrenci:
-        return hata("Bu saatte zaten başka bir randevun var.")
-    # ---------------------------------------------------------
-
-    try:
-        db.randevu_ekle(student_id, machine_id, start_time, program)
-    except sqlite3.IntegrityError:
-        return hata("Bu makine o saatte az önce doldu.")
-
-    flash("Randevun alındı.", "basarili")
-    return redirect(url_for("makine", zaman=start_time))
-
-@app.route("/randevularim")
-def randevularim():
-    if not session.get("student_id"):
-        return redirect(url_for("giris"))
-    randevular = db.ogrenci_randevulari(session["student_id"])
-    simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return render_template("randevularim.html", randevular=randevular, simdi=simdi)
-
-@app.route("/randevu/<int:appointment_id>/iptal", methods=["POST"])
-def randevu_iptal(appointment_id):
-    if not session.get("student_id"):
-        return redirect(url_for("giris"))
-
-    def hata(mesaj):
-        flash(mesaj, "hata")
-        return redirect(url_for("randevularim"))
-
-    randevu = db.randevu_getir(appointment_id)
-
-    # a) Randevu var mı?
-    
-    if randevu is None:
-        return hata("Randevu bulunamadı.")
-    # b) Bu randevu bu öğrencinin mi?        ← yetkilendirme
-    if randevu["student_id"] != session["student_id"]:
-            return hata("Randevu bulunamadı.")
-        
-    # c) Randevu hâlâ aktif mi?
-    if not randevu["status"] == "active":
-        return hata("Bu randevu zaten iptal edilmiş ya da tamamlanmış.")
-    
-    # d) Randevu başlamış ya da geçmiş mi?   (geçmiş randevu iptal edilemez)
-    simdi = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    if randevu["start_time"] <= simdi:
-        return hata("Bu randevu geçmiş veya çoktan başlamış.")
-
-    db.randevu_iptal_et(appointment_id)
-    flash("Randevun iptal edildi.", "basarili")
-    return redirect(url_for("randevularim"))
+        return {}
+    return {"okunmamis_bildirim": db.okunmamis_bildirim_sayisi(session["student_id"])}
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    # Debug ekranı tarayıcıdan kod çalıştırmaya izin verir; yalnızca geliştirmede FLASK_DEBUG=1 ile açılır
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1", port=5001)

@@ -1,0 +1,130 @@
+{# Ana ekranın altındaki çamaşır durum penceresi.
+   yikama: servis.calisan_yikama / demo_yikama -> {id, tur, makine, program, baslangic, bitis, toplam_sn, kalan_sn, ilerleme, bitti, demo}
+   Geri sayım sunucunun verdiği kalan saniyeden yürür: telefonun saati yanlış ya da başka saat diliminde olsa da doğru kalır.
+   Kapatma düğmesi yoktur: çamaşır çalıştığı ve bittikten sonra 30 dakika boyunca görünür kalır. #}
+{% if yikama %}
+<aside class="yikama {{ yikama.tur }}{% if yikama.bitti %} bitti{% endif %}" id="yikama" aria-label="Çamaşır durumu"
+       data-id="{{ yikama.id }}" data-kalan="{{ yikama.kalan_sn }}" data-toplam="{{ yikama.toplam_sn }}" data-bitis="{{ yikama.bitis }}">
+  <div class="yikama-ikon" aria-hidden="true">
+    {# İlerleme halkası: çevre 2·π·26 ≈ 163.4 #}
+    <svg class="halka" viewBox="0 0 60 60">
+      <circle class="halka-zemin" cx="30" cy="30" r="26"/>
+      <circle class="halka-dolu" cx="30" cy="30" r="26" stroke-dasharray="163.4"
+              stroke-dashoffset="{{ (163.4 * (1 - yikama.ilerleme)) | round(1) }}"/>
+    </svg>
+    <svg class="makine-ikon"><use href="#ikon-{{ yikama.tur }}"/></svg>
+    <span class="tik"><svg><use href="#ikon-tamam"/></svg></span>
+  </div>
+
+  <div class="yikama-metin">
+    <p class="yikama-etiket">
+      {{ yikama.makine }}{% if yikama.program %} · {{ yikama.program }}{% endif %}
+      {% if yikama.demo %}<span class="demo">Test</span>{% endif %}
+    </p>
+    {# Ekran okuyucu yalnızca durum değişince (çalışıyor -> hazır) okur; saniye saniye okumaz #}
+    <p class="yikama-baslik" aria-live="polite" id="yikama-baslik">
+      {% if yikama.bitti %}Program tamamlandı{% else %}Makine çalışıyor{% endif %}
+    </p>
+    <p class="yikama-alt" id="yikama-alt">
+      {% if yikama.bitti %}Bitiş {{ yikama.bitis }}. Çamaşırını makineden alabilirsin; makine sıradaki randevu için boşaltılmalı.
+      {% else %}Başlangıç {{ yikama.baslangic }} · Bitiş <strong>{{ yikama.bitis }}</strong>{% endif %}
+    </p>
+    <div class="cubuk" aria-hidden="true"><span style="width: {{ (yikama.ilerleme * 100) | round(1) }}%"></span></div>
+  </div>
+
+  <div class="sayac" aria-hidden="true">
+    <span class="sayac-deger" id="yikama-sayac">{{ "%d:%02d" % (yikama.kalan_sn // 60, yikama.kalan_sn % 60) }}</span>
+    <span class="sayac-etiket" id="yikama-sayac-etiket">{{ "bitti" if yikama.bitti else "kaldı" }}</span>
+  </div>
+</aside>
+
+<style>
+  .yikama { --vurgu: var(--camasir); --vurgu-acik: var(--camasir-acik);
+            position: fixed; z-index: 20; left: 50%; bottom: 16px; transform: translateX(-50%);
+            width: min(560px, calc(100% - 24px)); display: grid; grid-template-columns: auto 1fr auto; gap: 14px;
+            align-items: center; padding: 14px 18px 14px 14px; background: var(--kart); color: var(--yazi);
+            border: 1px solid #ffffffb3; border-radius: 24px; box-shadow: 0 18px 50px #14171f24, inset 0 1px 0 #ffffffcc;
+            animation: yikama-gir .35s ease-out; }
+  /* Buzlu cam: yarı saydam zemin, arkasındaki sayfa bulanık görünür. Desteklemeyen tarayıcıda opak beyaz kalır. */
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .yikama { background: #ffffffa6; -webkit-backdrop-filter: blur(18px) saturate(1.6); backdrop-filter: blur(18px) saturate(1.6); }
+  }
+  .yikama.dryer { --vurgu: var(--kurutma); --vurgu-acik: var(--kurutma-acik); }
+  .yikama.bitti { --vurgu: var(--calisiyor); --vurgu-acik: var(--calisiyor-acik); box-shadow: 0 18px 50px #1a7f4b33, inset 0 0 0 1.5px var(--calisiyor); }
+  @keyframes yikama-gir { from { transform: translate(-50%, 24px); opacity: 0; } }
+
+  .yikama-ikon { position: relative; width: 60px; height: 60px; display: grid; place-items: center; }
+  .halka { position: absolute; inset: 0; transform: rotate(-90deg); }
+  .halka circle { fill: none; stroke-width: 4; }
+  .halka-zemin { stroke: var(--vurgu-acik); }
+  .halka-dolu { stroke: var(--vurgu); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+  .makine-ikon { width: 30px; height: 30px; color: var(--vurgu); }
+  .yikama:not(.bitti) .makine-ikon { animation: yikama-titre 1.6s ease-in-out infinite; }
+  @keyframes yikama-titre { 25% { transform: rotate(-3deg); } 75% { transform: rotate(3deg); } }
+  .tik { display: none; position: absolute; right: -2px; bottom: -2px; width: 22px; height: 22px; border-radius: 50%;
+         background: var(--calisiyor); color: #fff; place-items: center; border: 2px solid var(--kart); }
+  .tik svg { width: 12px; height: 12px; }
+  .yikama.bitti .tik { display: grid; }
+
+  .yikama-metin { min-width: 0; }
+  .yikama-metin p { margin: 0; }
+  .yikama-etiket { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--vurgu); }
+  .yikama-baslik { font-size: 18px; font-weight: 800; margin-top: 2px !important; }
+  .yikama-alt { font-size: 13px; color: var(--soluk); margin-top: 2px !important; }
+  .cubuk { height: 6px; border-radius: 999px; background: var(--vurgu-acik); margin-top: 9px; overflow: hidden; }
+  .cubuk span { display: block; height: 100%; background: var(--vurgu); border-radius: inherit; transition: width 1s linear; }
+  .demo { margin-left: 6px; padding: 1px 7px; border-radius: 999px; background: var(--bant); color: var(--yazi);
+          letter-spacing: 0; text-transform: none; }
+
+  .sayac { display: grid; justify-items: end; }
+  .sayac-deger { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; line-height: 1; }
+  .sayac-etiket { font-size: 12px; color: var(--soluk); font-weight: 700; }
+  .yikama.bitti .sayac { display: none; }
+
+  /* Pencere son makine kartlarının üstünü kapatmasın */
+  main.uygulama:has(~ .yikama) { padding-bottom: 150px; }
+
+  @media (max-width: 480px) {
+    .yikama { grid-template-columns: auto 1fr; bottom: 10px; padding: 12px; }
+    .sayac { grid-column: 2; justify-items: start; grid-auto-flow: column; align-items: baseline; gap: 6px; }
+    .sayac-deger { font-size: 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .yikama, .yikama:not(.bitti) .makine-ikon { animation: none; }
+    .halka-dolu, .cubuk span { transition: none; }
+  }
+</style>
+
+<script>
+  (() => {
+    // Pencere kapatılamaz: çamaşır çalıştığı ve bittikten sonra 30 dakika boyunca ana ekranda kalır
+    const kutu = document.getElementById("yikama");
+
+    const toplam = Number(kutu.dataset.toplam);
+    const bitis = Date.now() + Number(kutu.dataset.kalan) * 1000;
+    const halka = kutu.querySelector(".halka-dolu"), cubuk = kutu.querySelector(".cubuk span");
+    const sayac = document.getElementById("yikama-sayac");
+
+    function guncelle() {
+      const kalan = Math.max(0, Math.round((bitis - Date.now()) / 1000));
+      const ilerleme = 1 - kalan / toplam;
+      halka.style.strokeDashoffset = (163.4 * (1 - ilerleme)).toFixed(1);
+      cubuk.style.width = (ilerleme * 100).toFixed(1) + "%";
+      const sa = Math.floor(kalan / 3600), dk = Math.floor(kalan % 3600 / 60), sn = kalan % 60;
+      sayac.textContent = sa ? `${sa}:${String(dk).padStart(2, "0")}:${String(sn).padStart(2, "0")}`
+                             : `${dk}:${String(sn).padStart(2, "0")}`;
+      if (kalan === 0 && !kutu.classList.contains("bitti")) {
+        // Çamaşır bitti: pencere "hazır" durumuna geçer, telefon destekliyorsa kısa titreşim
+        kutu.classList.add("bitti");
+        document.getElementById("yikama-baslik").textContent = "Program tamamlandı";
+        document.getElementById("yikama-alt").textContent =
+          `Bitiş ${kutu.dataset.bitis}. Çamaşırını makineden alabilirsin; makine sıradaki randevu için boşaltılmalı.`;
+        navigator.vibrate?.([120, 80, 120]);
+        clearInterval(zamanlayici);
+      }
+    }
+    const zamanlayici = setInterval(guncelle, 1000);
+    guncelle();
+  })();
+</script>
+{% endif %}

@@ -4,7 +4,7 @@ ogrenme/
 # Taslak ders belgeleri (takım docs/ klasörüne karar verene kadar)
 ders/
 
-# Veritabanı dosyası: schema.sql'den her zaman yeniden kurulabilir
+# Veritabanı dosyası: migrations/ ile her zaman yeniden kurulabilir (python seed.py)
 *.db
 
 # macOS'in kendi dosyası
@@ -13,3 +13,6 @@ ders/
 # Python sanal ortamı ve önbellek dosyaları
 .venv/
 __pycache__/
+
+# Öğrencilerin yüklediği arıza fotoğrafları (kişisel veri olabilir, repoya girmez)
+uploads/

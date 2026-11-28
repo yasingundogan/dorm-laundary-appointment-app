@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block baslik %}Kayıp Eşya{% endblock %}
+
+{% block stil %}
+{% include "_sayfa_stil.html" %}
+<style>
+    .pano { list-style: none; margin: 20px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+    /* İlanlar panoya iğnelenmiş kâğıt notlar gibi */
+    .not-kagidi { position: relative; background: var(--kart); border: 1px solid var(--cizgi); border-radius: 6px 6px 16px 6px;
+                  padding: 18px 14px 12px; box-shadow: var(--golge); display: grid; gap: 6px; transform: rotate(var(--aci, 0deg)); }
+    .not-kagidi:nth-child(3n+1) { --aci: -1deg; } .not-kagidi:nth-child(3n+2) { --aci: .8deg; }
+    .not-kagidi::before { content: ""; position: absolute; top: -7px; left: 50%; width: 14px; height: 14px; margin-left: -7px;
+                          border-radius: 50%; background: var(--kurutma); box-shadow: 0 2px 3px #0003; }
+    .esya { font-weight: 700; font-size: 16px; }
+    .kunye { font-size: 12px; color: var(--soluk); }
+    .kapat { margin: 4px 0 0; }
+    main.uygulama .kapat button { background: var(--kart-2); color: var(--yazi); font-size: 13px; padding: 5px 12px; }
+    .bos-pano { text-align: center; color: var(--soluk); padding: 28px 12px; border: 2px dashed var(--cizgi); border-radius: 20px; margin-top: 20px; }
+    .bos-pano svg { width: 40px; height: 40px; color: var(--kurutma); }
+    .satir { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+    @media (max-width: 480px) { .satir { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block icerik %}
+<main class="uygulama">
+  <a href="{{ url_for('randevu.makine') }}" class="geri"><span aria-hidden="true">←</span> Makineler</a>
+  <h1>Kayıp eşya panosu</h1>
+  <p class="aciklama">{{ camasirhane_adi }} çamaşırhanesi. Makinede unutulmuş bir şey bulduysan buraya yaz, sahibi görsün.
+    Eşyayı çamaşırhanedeki kayıp eşya rafına ya da görevliye bırak.</p>
+
+  {% if hata %}<div class="mesaj hata" role="alert">{{ hata }}</div>{% endif %}
+  <form method="post" class="kart">
+    <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+    <div class="satir">
+      <div class="alan">
+        <label for="esya">Ne buldun?</label>
+        <input id="esya" name="description" maxlength="200" minlength="3" required placeholder="ör. Mavi çizgili tek çorap">
+      </div>
+      <div class="alan">
+        <label for="makine">Hangi makinede?</label>
+        <select id="makine" name="machine_id">
+          <option value="">Bilmiyorum</option>
+          {% for m in makineler %}
+            <option value="{{ m['machine_id'] }}">{{ "Kurutma" if m["machine_type"] == "dryer" else "Çamaşır" }} {{ m["machine_no"] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="dugmeler"><button type="submit">Panoya as</button></div>
+  </form>
+
+  {% if esyalar %}
+    <ul class="pano">
+      {% for e in esyalar %}
+        <li class="not-kagidi">
+          <span class="esya">{{ e["description"] }}</span>
+          <span class="kunye">{{ e["makine"] or "Makine belirtilmedi" }} · {{ e["created_at"][8:10] }}.{{ e["created_at"][5:7] }} {{ e["created_at"][11:16] }}</span>
+          <span class="kunye">İlanı veren: {{ e["student_name"] }}</span>
+          {% if e["student_id"] == session.student_id %}
+            <form method="post" action="{{ url_for('yurt.kayip_esya_kapat', item_id=e['item_id']) }}" class="kapat">
+              <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+              <button type="submit">Sahibine ulaştı</button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="bos-pano">
+      <svg aria-hidden="true"><use href="#ikon-corap"/></svg>
+      <p>Panoda şu anda ilan yok. Çamaşırhanede unutulmuş bir eşya bulursan yukarıdaki formla ekleyebilirsin.</p>
+    </div>
+  {% endif %}
+</main>
+{% endblock %}

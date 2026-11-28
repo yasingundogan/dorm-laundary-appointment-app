@@ -1,0 +1,4 @@
+{# Anonim profil görseli: herkes için aynı siluet (gerçek fotoğraf ya da kişisel veri kullanılmaz) #}
+{% macro avatar(sinif="") %}
+<span class="avatar {{ sinif }}" aria-hidden="true"><svg><use href="#avatar"/></svg></span>
+{% endmacro %}

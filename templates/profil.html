@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% from "_avatar.html" import avatar %}
+{% block baslik %}Profilim{% endblock %}
+
+{% block stil %}
+<style>
+    .geri { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; margin-bottom: 14px;
+            border: 1px solid var(--cizgi); border-radius: 999px; background: var(--kart);
+            color: var(--yazi); font-size: 14px; font-weight: 600; text-decoration: none; }
+    .bos-liste { color: var(--soluk); }
+    ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    li { display: flex; align-items: center; gap: 12px; background: var(--kart); border: 1px solid var(--cizgi);
+         border-radius: 10px; padding: 12px; }
+    .ikon { flex: none; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; }
+    .ikon svg { width: 28px; height: 28px; }
+    .ikon.washer { background: var(--camasir-acik); color: var(--camasir); }
+    .ikon.dryer { background: var(--kurutma-acik); color: var(--kurutma); }
+    .detay { flex: 1; min-width: 0; }
+    .baslik { font-weight: 700; }
+    .zaman { color: var(--soluk); font-size: 14px; margin-top: 2px; }
+    .rozet { flex: none; font-size: 12px; padding: 3px 8px; border-radius: 999px; background: var(--bg); color: var(--soluk); }
+    .rozet.sayac { background: var(--calisiyor-acik); color: var(--calisiyor); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .rozet.cancelled, .rozet.no_show { background: var(--arizali-acik); color: var(--arizali); }
+    .rozet.son-dakika { background: var(--kurutma-acik); color: var(--kurutma); font-weight: 600; }
+    .gecmis li { opacity: .75; }
+    .profil > div { flex: 1; min-width: 0; }
+    .duzenle { flex: none; font-size: 14px; font-weight: 600; color: var(--marka); }
+    .iptal { margin: 0; flex: none; }
+    main.uygulama .iptal button { background: none; color: var(--arizali); border: 1px solid var(--arizali-acik);
+                                  font-size: 13px; padding: 4px 10px; border-radius: 999px; }
+    main.uygulama .iptal button:hover { background: var(--arizali-acik); }
+    li { flex-wrap: wrap; }
+    .profil { display: flex; align-items: center; gap: 14px; background: var(--kart); border: 1px solid var(--cizgi);
+              border-radius: 12px; padding: 16px; margin-top: 16px; }
+    .avatar.buyuk { width: 52px; height: 52px; font-size: 22px; flex: none; }
+    .bolum { font-size: 22px; margin-top: 32px; }
+    .bolum + h2 { margin-top: 12px; }
+  
+</style>
+{% endblock %}
+
+{% block icerik %}
+<main class="uygulama">
+  {# Geri: geldiği sayfaya döner (seçili gün/saat korunur); doğrudan açıldıysa makinelere gider #}
+  <a href="{{ url_for('randevu.makine') }}" class="geri" id="geri"><span aria-hidden="true">←</span> Geri</a>
+  <h1>Profilim</h1>
+  <section class="profil">
+    {{ avatar("buyuk") }}
+    <div>
+      <div class="baslik">{{ ogrenci["student_name"] }} {{ ogrenci["student_surname"] }}</div>
+      <div class="zaman">{{ ogrenci["dorm_name"] }} · {{ ogrenci["block_name"] }} · Oda {{ ogrenci["room_no"] }}</div>
+      <div class="zaman">{{ ogrenci["student_mail"] }} · {{ ogrenci["student_phone_no"] }}</div>
+    </div>
+    <a href="{{ url_for('profil.profil_duzenle') }}" class="duzenle">Düzenle</a>
+  </section>
+
+  <h2 class="bolum">Bu hafta</h2>
+  {% include "_haftalik_hak.html" %}
+
+  <h2 class="bolum">Randevularım</h2>
+
+  {% macro satir(r, sayac) %}
+    {% set tur = "Kurutma" if r["machine_type"] == "dryer" else "Çamaşır" %}
+    <li>
+      <span class="ikon {{ r['machine_type'] }}" role="img" aria-label="{{ tur }}">
+        <svg><use href="#ikon-{{ r['machine_type'] }}"/></svg>
+      </span>
+      <div class="detay">
+        <div class="baslik">{{ tur }} makinesi {{ r["machine_no"] }}
+          {%- if r["program"] %} · {{ "Renkli" if r["program"] == "colored" else "Beyaz" }}{% endif %}</div>
+        <div class="zaman">{{ r["start_time"][:10] }} · {{ r["start_time"][11:16] }}–{{ r["end_time"][11:16] }}</div>
+      </div>
+      {% if sayac and r["start_time"] > simdi %}
+        {# İptal: yalnızca henüz başlamamış randevular #}
+        <form method="post" action="{{ url_for('randevu.randevu_iptal', appointment_id=r['appointment_id']) }}" class="iptal"
+              onsubmit="return confirm('Bu randevuyu iptal etmek istediğine emin misin?')">
+          <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+          <button type="submit" aria-label="{{ tur }} makinesi {{ r['machine_no'] }} randevusunu iptal et">İptal</button>
+        </form>
+      {% endif %}
+      {% if sayac %}
+        <span class="rozet sayac" data-baslangic="{{ r['start_time'] }}" data-bitis="{{ r['end_time'] }}"></span>
+      {% else %}
+        {% if r["son_dakika"] %}
+          <span class="rozet son-dakika">Son dakika iptali</span>
+        {% else %}
+          {% set durumlar = {"cancelled": "İptal edildi", "no_show": "Gelinmedi"} %}
+          <span class="rozet {{ r['status'] }}">{{ durumlar.get(r["status"], "Tamamlandı") }}</span>
+        {% endif %}
+      {% endif %}
+    </li>
+  {% endmacro %}
+
+  <h2>Yaklaşan</h2>
+  {% if yaklasan %}
+    <ul>{% for r in yaklasan %}{{ satir(r, true) }}{% endfor %}</ul>
+  {% else %}
+    <p class="bos-liste">Yaklaşan randevun yok. <a href="{{ url_for('randevu.makine') }}">Randevu al</a></p>
+  {% endif %}
+
+  <h2>Geçmiş</h2>
+  {% if gecmis %}
+    <ul class="gecmis">{% for r in gecmis %}{{ satir(r, false) }}{% endfor %}</ul>
+  {% else %}
+    <p class="bos-liste">Henüz geçmiş randevun yok.</p>
+  {% endif %}
+</main>
+{% include "_yikama_popup.html" %}
+{% endblock %}
+
+{% block script %}
+<script>
+  document.getElementById("geri").addEventListener("click", e => {
+    if (document.referrer.startsWith(location.origin)) { e.preventDefault(); history.back(); }
+  });
+
+  // Kalan süre her saniye güncellenir: önce başlamaya, makine çalışırken bitişe kalan süre
+  const parca = ms => {
+    const s = Math.floor(ms / 1000), g = Math.floor(s / 86400), sa = Math.floor(s % 86400 / 3600),
+          dk = Math.floor(s % 3600 / 60), sn = s % 60;
+    if (g) return `${g} gün ${sa} sa`;
+    if (sa) return `${sa} sa ${dk} dk`;
+    return `${dk} dk ${String(sn).padStart(2, "0")} sn`;
+  };
+  const tarih = s => new Date(s.replace(" ", "T"));
+  function guncelle() {
+    const simdi = Date.now();
+    document.querySelectorAll(".sayac").forEach(el => {
+      const bas = tarih(el.dataset.baslangic), bit = tarih(el.dataset.bitis);
+      el.textContent = simdi < bas ? "Başlamasına " + parca(bas - simdi)
+                     : simdi < bit ? "Bitmesine " + parca(bit - simdi)
+                     : "Bitti";
+    });
+  }
+  guncelle();
+  setInterval(guncelle, 1000);
+</script>
+{% endblock %}

@@ -20,8 +20,8 @@ def conflict_data(test_db):
     # Active washer appointment from 14:00:00 to 15:00:00
     cur.execute(
         """
-        INSERT INTO appointments (student_id, machine_id, start_time, program, status)
-        VALUES (?, ?, '2026-11-18 14:00:00', 'colored', 'active')
+        INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status)
+        VALUES (?, ?, '2026-11-18 14:00:00', '2026-11-18 15:00:00', 'colored', 'active')
         """,
         (s_id, m_id),
     )
@@ -73,13 +73,13 @@ def test_e1_e4_weekly_washer_quota(test_db):
     d_id = cur.lastrowid
 
     appointments = [
-        (s_id, w_id, "2026-11-16 10:00:00", "colored", "active"),     # Mon washer (counted)
-        (s_id, w_id, "2026-11-18 10:00:00", "white", "active"),       # Wed washer (counted)
-        (s_id, d_id, "2026-11-17 10:00:00", None, "active"),          # Tue dryer (not counted)
-        (s_id, w_id, "2026-11-19 10:00:00", "colored", "cancelled"),  # Thu cancelled (not counted)
+        (s_id, w_id, "2026-11-16 10:00:00", "2026-11-16 11:00:00", "colored", "active"),     # Mon washer (counted)
+        (s_id, w_id, "2026-11-18 10:00:00", "2026-11-18 12:00:00", "white", "active"),       # Wed washer (counted)
+        (s_id, d_id, "2026-11-17 10:00:00", "2026-11-17 12:00:00", None, "active"),          # Tue dryer (not counted)
+        (s_id, w_id, "2026-11-19 10:00:00", "2026-11-19 11:00:00", "colored", "cancelled"),  # Thu cancelled (not counted)
     ]
     cur.executemany(
-        "INSERT INTO appointments (student_id, machine_id, start_time, program, status) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO appointments (student_id, machine_id, start_time, end_time, program, status) VALUES (?, ?, ?, ?, ?, ?)",
         appointments,
     )
     test_db.commit()

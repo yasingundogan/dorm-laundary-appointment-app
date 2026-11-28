@@ -25,7 +25,7 @@ def test_b2_wrong_password(client, registered_student):
     assert registered_student["email"] in html
 
     with client.session_transaction() as sess:
-        assert len(sess) == 0
+        assert "student_id" not in sess  # formun CSRF anahtarı oturumda kalabilir
 
 
 def test_b3_nonexistent_email(client):
@@ -51,7 +51,7 @@ def test_b5_logout(client, registered_student):
             "password": registered_student["password"],
         },
     )
-    res = client.get("/cikis")
+    res = client.post("/cikis")
     assert res.status_code == 302
     assert "/giris" in res.headers.get("Location", "")
 
