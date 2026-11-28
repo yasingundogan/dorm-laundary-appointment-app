@@ -26,7 +26,7 @@ insert into students (student_name, student_surname, student_phone_no, student_m
 
 -- Ayşe (student_id 1), 1 nolu çamaşır makinesi (machine_id 1), renkli.
 -- status ve created_at yazılmadı: default değerler devreye girer.
--- end_time: uygulama bunu kurallar.SURELER ile hesaplar (renkli 1 saat, beyaz ve kurutma 2 saat).
+-- end_time: uygulama bunu kurallar.SURELER ile hesaplar (renkli ve beyaz 1 saat, kurutma 2 saat).
 insert into appointments (student_id, machine_id, start_time, end_time, program ) values
     (1, 1, '2026-09-30 14:00:00', '2026-09-30 15:00:00', 'colored' );
 
@@ -36,7 +36,7 @@ insert into appointments (student_id, machine_id, start_time, end_time, program 
 -- Zeynep, Ayşe'nin aktif randevusu varken aynı makine + aynı saati almaya çalışıyor.
 -- BEKLENEN: HATA (one_active_appointment_per_slot)
 insert into appointments (student_id, machine_id, start_time, end_time, program) values
-    (2, 1, '2026-09-30 14:00:00', '2026-09-30 16:00:00', 'white');
+    (2, 1, '2026-09-30 14:00:00', '2026-09-30 15:00:00', 'white');
 
 
 -- ========== 3. SENARYOLAR ==========
@@ -51,12 +51,12 @@ where appointment_id = 1;
 -- b) Zeynep aynı makine + aynı saati tekrar deniyor.
 -- BEKLENEN: BAŞARILI (iptal edilen randevu index'e dahil değil)
 insert into appointments (student_id, machine_id, start_time, end_time, program) values
-    (2, 1, '2026-09-30 14:00:00', '2026-09-30 16:00:00', 'white');
+    (2, 1, '2026-09-30 14:00:00', '2026-09-30 15:00:00', 'white');
 
 -- c) Olmayan bir öğrenciye (student_id 99) randevu.
 -- BEKLENEN: HATA (foreign key)
 insert into appointments (student_id, machine_id, start_time, end_time, program) values
-    (99, 3, '2026-10-05 14:00:00', '2026-10-05 16:00:00', 'white');
+    (99, 3, '2026-10-05 14:00:00', '2026-10-05 15:00:00', 'white');
 
 -- d) Kurutma makinesine (machine_id 4) programsız randevu.
 -- BEKLENEN: BAŞARILI (program NULL kalır, check NULL'u reddetmez)

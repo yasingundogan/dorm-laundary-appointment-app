@@ -328,7 +328,7 @@
     // Kurutmada program yok: alan gizlenir ve gönderilmez
     programAlani.hidden = tur === "dryer";
     programAlani.disabled = tur === "dryer";
-    // Beyaz (2 saat) bu saate sığmıyorsa seçilemez; seçiliyse renkliye dönülür
+    // Beyaz bu saate sığmıyorsa seçilemez; seçiliyse renkliye dönülür
     const beyaz = onayForm.querySelector("input[name=program][value=white]");
     beyaz.disabled = !beyazOlur;
     document.getElementById("beyaz-not").hidden = beyazOlur || tur === "dryer";

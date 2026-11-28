@@ -14,7 +14,7 @@ YIKAMA = {"machine_id": 1, "machine_type": "washer", "laundry_room_id": 1, "out_
 KURUTMA = {**YIKAMA, "machine_type": "dryer"}
 
 
-@pytest.mark.parametrize("tip, program, saat", [("washer", "colored", 1), ("washer", "white", 2), ("dryer", None, 2)])
+@pytest.mark.parametrize("tip, program, saat", [("washer", "colored", 1), ("washer", "white", 1), ("dryer", None, 2)])
 def test_randevu_suresi(tip, program, saat):
     assert kurallar.randevu_suresi(tip, program) == saat
 
@@ -25,7 +25,7 @@ def test_randevu_suresi(tip, program, saat):
     (YIKAMA, 1, datetime(2026, 11, 25, 11), "white", "Geçmiş"),
     (YIKAMA, 1, datetime(2026, 12, 7, 10), "white", "06.12.2026"),           # pencere gelecek pazar biter
     (YIKAMA, 1, datetime(2026, 11, 28, 8), "white", "09:00-17:00"),          # cumartesi 09:00'da açılır
-    (YIKAMA, 1, datetime(2026, 11, 26, 19), "white", "21:00'de biterdi"),    # beyaz 2 saat: kapanışı aşar
+    (YIKAMA, 1, datetime(2026, 11, 26, 19), "white", None),                  # beyaz 1 saat: sığar
     (YIKAMA, 1, datetime(2026, 11, 26, 19), "colored", None),                # renkli 1 saat: sığar
     (KURUTMA, 1, datetime(2026, 11, 26, 19), None, "21:00'de biterdi"),
     ({**YIKAMA, "out_of_order": 1}, 1, datetime(2026, 11, 26, 10), "white", "arızalı"),
@@ -46,9 +46,9 @@ def test_son_rezervasyon_gunu(gun, son):
     assert str(kurallar.son_rezervasyon_gunu(gun)) == son
 
 
-def test_beyaz_ancak_iki_bos_saate_sigar():
+def test_beyaz_her_uygun_saate_sigar():
     hucreler = [(8, "uygun"), (9, "uygun"), (10, "dolu"), (11, "uygun"), (19, "uygun")]
-    assert kurallar.beyaz_sigan_saatler(hucreler) == {8}
+    assert kurallar.beyaz_sigan_saatler(hucreler) == {8, 9, 11, 19}  # beyaz da renkli gibi 1 saat
 
 
 def test_serit_hesapla_kendi_ve_baskasinin_randevusu():
@@ -81,7 +81,7 @@ def test_randevunun_bitisi_programa_gore_kaydedilir(client, test_db):
     client.post("/randevu", data={"machine_id": w, "start_time": "2026-11-26 10:00:00", "program": "white"})
     client.post("/randevu", data={"machine_id": w, "start_time": "2026-11-27 10:00:00", "program": "colored"})
     satirlar = test_db.execute("SELECT start_time, end_time, created_at FROM appointments ORDER BY start_time").fetchall()
-    assert [(r[0], r[1]) for r in satirlar] == [("2026-11-26 10:00:00", "2026-11-26 12:00:00"),
+    assert [(r[0], r[1]) for r in satirlar] == [("2026-11-26 10:00:00", "2026-11-26 11:00:00"),
                                                ("2026-11-27 10:00:00", "2026-11-27 11:00:00")]
     assert {r[2] for r in satirlar} == {"2026-11-25 12:00:00"}  # kayıt saati de zaman.simdi()'den
 

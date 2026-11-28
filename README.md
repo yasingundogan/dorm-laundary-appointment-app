@@ -110,7 +110,7 @@ The SQLite database contains three main tables:
 
 The schema includes foreign-key constraints, unique student email and phone values, validation for machine type and appointment status, and a partial unique index that prevents duplicate active reservations for the same machine and start time.
 
-Machine occupancy is calculated from active appointments. Durations live in one place, `kurallar.SURELER`: colored wash 1 hour, white wash 2 hours, dryer 2 hours. Each appointment's `end_time` is computed from it when the booking is created and stored in the database. All times are Istanbul local time; the app never reads the server clock directly (see `zaman.py`).
+Machine occupancy is calculated from active appointments. Durations live in one place, `kurallar.SURELER`: colored wash 1 hour, white wash 1 hour, dryer 2 hours. Each appointment's `end_time` is computed from it when the booking is created and stored in the database. All times are Istanbul local time; the app never reads the server clock directly (see `zaman.py`).
 
 ## Database Migrations
 

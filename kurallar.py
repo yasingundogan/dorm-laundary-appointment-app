@@ -11,7 +11,7 @@ HAFTALIK_CAMASIR_HAKKI = 2
 
 # Randevu süreleri (saat). Tek kaynak: Python bunları kullanır, randevunun bitişi (end_time) bunlarla
 # hesaplanıp veritabanına yazılır, sayfadaki JavaScript de aynı tabloyu sunucudan alır.
-SURELER = {"dryer": 2, "white": 2, "colored": 1}
+SURELER = {"dryer": 2, "white": 1, "colored": 1}
 PROGRAMLAR = ("colored", "white")
 
 EPOSTA_KALIBI = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
@@ -25,7 +25,7 @@ FOTO_IMZALARI = {b"\xff\xd8\xff": "jpg", b"\x89PNG\r\n\x1a\n": "png"}
 # ---- Süre ve çalışma saatleri ----
 
 def randevu_suresi(machine_type, program):
-    """Saat cinsinden süre: kurutma ve beyaz yıkama 2 saat, renkli yıkama 1 saat."""
+    """Saat cinsinden süre: kurutma 2 saat, renkli ve beyaz yıkama 1 saat."""
     return SURELER["dryer"] if machine_type == "dryer" else SURELER.get(program, SURELER["colored"])
 
 
@@ -155,7 +155,7 @@ def serit_hesapla(makineler, randevular, gun, simdi, student_id):
 
 
 def beyaz_sigan_saatler(hucreler):
-    """Beyaz yıkama (2 saat) için o saat ve bir sonraki saat boş olmalı."""
+    """Beyaz yıkamanın sığdığı saatler: SURELER["white"] kadar ardışık saat boş olmalı."""
     durumlar = dict(hucreler)
     ek = SURELER["white"] - SURELER["colored"]
     return {h for h, d in hucreler if d == "uygun" and all(durumlar.get(h + k) == "uygun" for k in range(1, ek + 1))}

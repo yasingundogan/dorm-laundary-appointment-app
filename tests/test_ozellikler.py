@@ -164,40 +164,37 @@ def test_profil_gecersiz_bilgi_reddedilir(ortam, degisiklik, hata):
     assert ortam["db"].execute("SELECT room_no FROM students WHERE student_id = ?", (ortam["a"],)).fetchone()[0] == "A-1"
 
 
-# ---- Beyaz yıkama 2 saat, renkli 1 saat ----
-def test_beyaz_yikama_iki_saat_surer(ortam):
+# ---- Beyaz ve renkli yıkama 1 saat ----
+def test_beyaz_yikama_bir_saat_surer(ortam):
     c, db = ortam["client"], ortam["db"]
     res = c.post("/randevu", follow_redirects=True, data={
         "machine_id": ortam["washer"], "start_time": ts(yarin(10)), "program": "white"})
     html = res.get_data(as_text=True)
-    assert "Randevun alındı." in html and "saat=12" in html  # kurutma önerisi beyaz bitince: 12:00
+    assert "Randevun alındı." in html and "saat=11" in html  # kurutma önerisi beyaz bitince: 11:00
 
-    # 11:00 hâlâ dolu (başka öğrenci denese de alamaz), 12:00 boş
+    # 11:00 hemen boş: başka öğrenci alabilir
     from app import app
     b = app.test_client()
     b.post("/kayit", data={"first_name": "B", "last_name": "B", "email": "b@test.co", "phone": "05550000002",
                            "room": "A-2", "password": "password123", "confirm_password": "password123"})
     b.post("/giris", data={"email": "b@test.co", "password": "password123"})
     b.post("/randevu", data={"machine_id": ortam["washer"], "start_time": ts(yarin(11)), "program": "colored"})
-    b.post("/randevu", data={"machine_id": ortam["washer"], "start_time": ts(yarin(12)), "program": "colored"})
     saatler = [r[0][11:13] for r in db.execute("SELECT start_time FROM appointments ORDER BY start_time")]
-    assert saatler == ["10", "12"]
+    assert saatler == ["10", "11"]
 
 
-def test_kapanistan_bir_saat_once_beyaz_alinamaz(ortam):
+def test_kapanistan_bir_saat_once_beyaz_alinir(ortam):
     kapanis = calisma_saatleri(yarin(0))[1]
     res = ortam["client"].post("/randevu", follow_redirects=True, data={
         "machine_id": ortam["washer"], "start_time": ts(yarin(kapanis - 1)), "program": "white"})
-    assert f"çamaşırhane {kapanis:02d}:00" in res.get_data(as_text=True)  # kesme işareti HTML'de &#39; olur
-    assert ortam["db"].execute("SELECT COUNT(*) FROM appointments").fetchone()[0] == 0
+    assert "Randevun alındı." in res.get_data(as_text=True)
 
 
-def test_beyaz_sigmayan_saatte_beyaz_secenegi_kapali(ortam):
-    # 11:00 dolu: 10:00'da renkli olur, beyaz (10-12) olmaz; 12:00'de ikisi de olur
+def test_bos_saatte_beyaz_secenegi_acik(ortam):
+    # 11:00 dolu: 10:00'da beyaz da olur (1 saat, 10-11)
     randevu_ekle(ortam["db"], ortam["a"], ortam["washer"], yarin(11), "colored")
     html = ortam["client"].get(f"/makineler?gun={yarin(10):%Y-%m-%d}&saat=10").get_data(as_text=True)
-    assert 'data-saat="10"\n                          data-beyaz="0"' in html
-    assert 'data-saat="12"\n                          data-beyaz="1"' in html
+    assert 'data-saat="10"\n                          data-beyaz="1"' in html
 
 
 # ---- Çamaşır durum penceresi (ana ekranın altı) ----
@@ -206,11 +203,11 @@ def _gun(saat, dakika=0):
 
 
 def test_calisan_camasir_icin_durum_penceresi_cikar(ortam):
-    randevu_ekle(ortam["db"], ortam["a"], ortam["washer"], _gun(11), "white")  # 11:00-13:00, 1 saat kaldı
+    randevu_ekle(ortam["db"], ortam["a"], ortam["washer"], _gun(11, 30), "white")  # 11:30-12:30, 30 dk kaldı
     html = ortam["client"].get("/makineler").get_data(as_text=True)
-    assert 'id="yikama"' in html and 'data-kalan="3600"' in html and 'data-toplam="7200"' in html
+    assert 'id="yikama"' in html and 'data-kalan="1800"' in html and 'data-toplam="3600"' in html
     assert "Çamaşır makinesi 1 · Beyaz" in html and "Makine çalışıyor" in html and "ikon-washer" in html
-    assert "Bitiş <strong>13:00</strong>" in html
+    assert "Bitiş <strong>12:30</strong>" in html
 
 
 def test_biten_kurutma_30_dakika_hazir_gorunur_sonra_kaybolur(ortam):
@@ -241,6 +238,6 @@ def test_deneme_modu_yalnizca_aciksa_calisir(ortam, monkeypatch):
 
 
 def test_durum_penceresi_profilde_de_gorunur(ortam):
-    randevu_ekle(ortam["db"], ortam["a"], ortam["washer"], _gun(11), "white")
+    randevu_ekle(ortam["db"], ortam["a"], ortam["washer"], _gun(11, 30), "white")
     html = ortam["client"].get("/profil").get_data(as_text=True)
-    assert 'id="yikama"' in html and 'data-kalan="3600"' in html
+    assert 'id="yikama"' in html and 'data-kalan="1800"' in html

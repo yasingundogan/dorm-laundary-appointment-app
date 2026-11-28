@@ -52,7 +52,7 @@ create table appointments (
     student_id     integer not null references students(student_id),
     machine_id     integer not null references machines(machine_id),
     start_time     text    not null,
-    end_time       text    not null,   -- kayıtta kurallar.SURELER ile hesaplanır (kurutma/beyaz 2 saat, renkli 1 saat)
+    end_time       text    not null,   -- kayıtta kurallar.SURELER ile hesaplanır (kurutma 2 saat, renkli ve beyaz 1 saat)
     created_at     text    not null default (datetime('now', 'localtime')),
     cancelled_at   text,
     program        text    check (program in ('colored', 'white')),
